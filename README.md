@@ -26,6 +26,7 @@ The library accepts the following configuration options:
 | `inputDir` | string | Yes | Directory containing the Agda-generated HTML files |
 | `backButtonUrl` | string | No | URL for the back button in the header (e.g., "/docs") |
 | `modules` | string[] | No | Array of module names to include in the sidebar. If not provided, all modules will be shown |
+| `githubUrl` | string | No | Optional GitHub URL for the project, adds a GitHub link to the header |
 
 ## Usage
 
@@ -36,7 +37,8 @@ The library accepts the following configuration options:
 ```json
 {
   "backButtonUrl": "/docs",
-  "modules": ["Leios", "Leios.Ledger"]
+  "modules": ["Leios", "Leios.Ledger"],
+  "githubUrl": "https://github.com/your-organization/your-project"
 }
 ```
 
@@ -53,7 +55,8 @@ import { AgdaDocsRenderer } from 'agda-web-docs-lib';
 
 const config = {
   backButtonUrl: '/docs',
-  modules: ['Leios', 'Leios.Ledger']
+  modules: ['Leios', 'Ledger'],
+  githubUrl: 'https://github.com/your-organization/your-project'
 };
 
 const renderer = new AgdaDocsRenderer(config);
