@@ -3,7 +3,6 @@
   // Variable declarations
   let searchActive = false;
   let searchResults = [];
-  let selectedResultIndex = -1;
   let searchIndex = {};
   
   // Create DOM elements for search
@@ -175,7 +174,7 @@
   }
   
   // Render search results
-  function renderSearchResults(searchUI, results) {
+  function renderSearchResults(searchUI, results, toggleSearchFn) {
     searchUI.results.innerHTML = '';
     
     if (results.length === 0) {
@@ -274,19 +273,41 @@
       
       resultEl.appendChild(pathContainer);
       
-      // Add event handlers for search results
+      // Add click handler for search results - natural anchor click behavior
       resultEl.addEventListener('click', (e) => {
-        // Update selection index
-        selectedResultIndex = parseInt(resultEl.getAttribute('data-index') || '0');
-        highlightSelectedResult();
-        // Close the search overlay (the navigation will happen naturally)
-        toggleSearch();
+        e.preventDefault(); // Prevent default to handle navigation ourselves
+
+        // Update selection highlighting visually
+        const allResults = searchUI.results.querySelectorAll('.search-result');
+        allResults.forEach(r => r.classList.remove('selected'));
+        resultEl.classList.add('selected');
+        
+        // Close the search overlay
+        toggleSearchFn();
+        
+        // Handle navigation directly without delay
+        const targetUrl = result.url;
+        // Handle same-page navigation specially
+        const currentPath = window.location.pathname;
+        const currentPathWithoutHash = currentPath.split('#')[0];
+        const isInternalLink = targetUrl.startsWith('#') || 
+          (targetUrl.includes('#') && targetUrl.split('#')[0] === currentPathWithoutHash);
+        
+        if (isInternalLink) {
+          // For same-page navigation, just set the hash
+          const hash = targetUrl.includes('#') ? targetUrl.split('#')[1] : targetUrl.substring(1);
+          window.location.hash = hash;
+        } else {
+          // For different page navigation
+          window.location.href = targetUrl;
+        }
       });
       
-      // Add hover effect manually
+      // Add hover effect manually (highlight on hover)
       resultEl.addEventListener('mouseover', () => {
-        selectedResultIndex = index;
-        highlightSelectedResult();
+        const allResults = searchUI.results.querySelectorAll('.search-result');
+        allResults.forEach(r => r.classList.remove('selected'));
+        resultEl.classList.add('selected');
       });
       
       searchUI.results.appendChild(resultEl);
@@ -418,17 +439,87 @@
       
       // Handle arrow keys in results
       if (searchActive && searchResults.length > 0) {
+        const resultElements = searchUI.results.querySelectorAll('.search-result');
+        const selectedElement = searchUI.results.querySelector('.search-result.selected');
+        
         if (e.key === 'ArrowDown') {
           e.preventDefault();
-          selectedResultIndex = Math.min(selectedResultIndex + 1, searchResults.length - 1);
-          highlightSelectedResult();
+          let nextIndex = 0; // Default to first if none selected
+          
+          if (selectedElement) {
+            // Find current index
+            for (let i = 0; i < resultElements.length; i++) {
+              if (resultElements[i] === selectedElement) {
+                // Move to next (or stay at end)
+                nextIndex = Math.min(i + 1, resultElements.length - 1);
+                break;
+              }
+            }
+          }
+          
+          // Remove selection from all
+          resultElements.forEach(el => el.classList.remove('selected'));
+          // Add to the next one
+          resultElements[nextIndex].classList.add('selected');
+          // Ensure visible
+          resultElements[nextIndex].scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+          });
         } else if (e.key === 'ArrowUp') {
           e.preventDefault();
-          selectedResultIndex = Math.max(selectedResultIndex - 1, 0);
-          highlightSelectedResult();
-        } else if (e.key === 'Enter' && selectedResultIndex >= 0) {
+          let prevIndex = resultElements.length - 1; // Default to last if none selected
+          
+          if (selectedElement) {
+            // Find current index
+            for (let i = 0; i < resultElements.length; i++) {
+              if (resultElements[i] === selectedElement) {
+                // Move to previous (or stay at start)
+                prevIndex = Math.max(i - 1, 0);
+                break;
+              }
+            }
+          }
+          
+          // Remove selection from all
+          resultElements.forEach(el => el.classList.remove('selected'));
+          // Add to the previous one
+          resultElements[prevIndex].classList.add('selected');
+          // Ensure visible
+          resultElements[prevIndex].scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+          });
+        } else if (e.key === 'Enter') {
           e.preventDefault();
-          navigateToResult(searchResults[selectedResultIndex]);
+          
+          // If an item is selected, navigate to it
+          if (selectedElement) {
+            const index = parseInt(selectedElement.getAttribute('data-index'));
+            if (!isNaN(index) && index >= 0 && index < searchResults.length) {
+              // Get the result from the searchResults array
+              const result = searchResults[index];
+              // Close search and navigate
+              toggleSearch();
+              
+              // Navigate directly without delay
+              const targetUrl = result.url;
+              // Handle same-page navigation specially
+              const currentPath = window.location.pathname;
+              const currentPathWithoutHash = currentPath.split('#')[0];
+              const isInternalLink = targetUrl.startsWith('#') || 
+                (targetUrl.includes('#') && targetUrl.split('#')[0] === currentPathWithoutHash);
+              
+              if (isInternalLink) {
+                // For same-page navigation, just set the hash
+                const hash = targetUrl.includes('#') ? targetUrl.split('#')[1] : targetUrl.substring(1);
+                window.location.hash = hash;
+              } else {
+                // For different page navigation
+                window.location.href = targetUrl;
+              }
+            }
+          }
         }
       }
     });
@@ -460,7 +551,6 @@
         searchUI.results.innerHTML = '';
         searchUI.results.style.display = 'none';
         searchResults = [];
-        selectedResultIndex = -1;
         return;
       }
       
@@ -474,41 +564,8 @@
         searchResults = performSearch(query);
         
         // Render results
-        renderSearchResults(searchUI, searchResults);
-        
-        // Reset selected index
-        selectedResultIndex = -1;
+        renderSearchResults(searchUI, searchResults, toggleSearch);
       }, 200);
     });
-    
-    // Function to highlight the selected result
-    function highlightSelectedResult() {
-      const resultElements = searchUI.results.querySelectorAll('.search-result');
-      
-      // First remove all selected classes
-      resultElements.forEach(el => {
-        el.classList.remove('selected');
-      });
-      
-      // Then add to the currently selected one
-      if (selectedResultIndex >= 0 && selectedResultIndex < resultElements.length) {
-        const selectedElement = resultElements[selectedResultIndex];
-        selectedElement.classList.add('selected');
-        
-        // Ensure selected item is visible
-        selectedElement.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'nearest'
-        });
-      }
-    }
-    
-    // Function to navigate to a search result
-    function navigateToResult(result) {
-      if (result && result.url) {
-        window.location.href = result.url;
-        toggleSearch(); // Close the search overlay after navigation
-      }
-    }
   });
 })(); 
