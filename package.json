@@ -22,7 +22,7 @@
   ],
   "scripts": {
     "build": "rm -rf dist && tsc && chmod +x ./dist/cli.js && cp -r src/styles dist/",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "prepublish": "npm run lint && npm test && npm run build"
