@@ -1,0 +1,358 @@
+/* Base styles */
+:root {
+  --header-height: 64px;
+  --sidebar-width: 280px;
+  --sidebar-padding: 24px;
+  --content-max-width: 900px;
+  --primary-color: #1a1a1a;
+  --border-color: #e0e0e0;
+  --hover-bg: rgba(0, 119, 204, 0.1);
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --content-padding: 40px;
+  --background-color: #ffffff;
+  --code-bg: #f6f8fa;
+  --code-color: #24292e;
+  --link-color: #0077cc;
+  --link-hover-color: #0055aa;
+  --syntax-keyword: #d73a49;
+  --syntax-string: #032f62;
+  --syntax-comment: #6a737d;
+  --syntax-function: #6f42c1;
+  --syntax-variable: #e36209;
+  --syntax-operator: #005cc5;
+  --syntax-class: #6f42c1;
+  --box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --code-border: rgba(0, 0, 0, 0.05);
+  --sidebar-border-color: var(--border-color);
+  --header-border-color: var(--border-color);
+}
+
+:root.dark-theme {
+  --primary-color: #e4e4e4;
+  --border-color: #555555;
+  --hover-bg: rgba(88, 166, 255, 0.2);
+  --background-color: #121212;
+  --code-bg: rgba(255, 255, 255, 0.07);
+  --code-color: #e4e4e4;
+  --link-color: #78aeff;
+  --link-hover-color: #94c2ff;
+  --syntax-keyword: #c75d65;
+  --syntax-string: #7fb0d8;
+  --syntax-comment: #6e7781;
+  --syntax-function: #b387d8;
+  --syntax-variable: #e0a17a;
+  --syntax-operator: #8ab4ff;
+  --syntax-class: #b387d8;
+  --box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --code-border: rgba(255, 255, 255, 0.08);
+  --sidebar-border-color: #333333;
+  --header-border-color: #333333;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-family);
+  color: var(--primary-color);
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--background-color);
+}
+
+/* Header styles */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);
+  background: var(--background-color);
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 1000;
+  box-shadow: var(--box-shadow);
+  border-bottom: 1px solid var(--header-border-color);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.back-button {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-size: 15px;
+  padding: 8px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.back-button:hover {
+  background-color: var(--hover-bg);
+}
+
+.github-link {
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.github-link:hover {
+  background-color: var(--hover-bg);
+}
+
+.github-icon {
+  width: 24px;
+  height: 24px;
+}
+
+/* Theme toggler styles */
+.theme-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle:hover {
+  background-color: var(--hover-bg);
+}
+
+.theme-toggle svg {
+  width: 24px;
+  height: 24px;
+}
+
+:root:not(.dark-theme) .dark-icon {
+  display: none;
+}
+
+:root.dark-theme .light-icon {
+  display: none;
+}
+
+/* Main layout */
+.main-wrapper {
+  display: flex;
+  margin-top: var(--header-height);
+  min-height: calc(100vh - var(--header-height));
+}
+
+/* Sidebar styles */
+.sidebar {
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  bottom: 0;
+  width: var(--sidebar-width);
+  background: var(--background-color);
+  border-right: 1px solid var(--sidebar-border-color);
+  overflow-y: auto;
+  padding: var(--sidebar-padding);
+  flex-shrink: 0;
+}
+
+.modules-header {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--sidebar-border-color);
+}
+
+.module-group-header {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--primary-color);
+  opacity: 0.7;
+  margin: 20px 0 8px 0;
+  padding-left: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.module-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px 0;
+}
+
+.module-item {
+  margin-bottom: 2px;
+  padding-left: 24px;
+}
+
+.module-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-size: 14px;
+  display: block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.module-link:hover {
+  background-color: var(--hover-bg);
+}
+
+.module-link.active {
+  background-color: var(--hover-bg);
+  font-weight: 500;
+}
+
+/* Main content styles */
+.main-content {
+  flex: 1;
+  margin-left: calc(var(--sidebar-width) + var(--sidebar-padding) * 2);
+  padding: var(--content-padding);
+  overflow-y: auto;
+  max-width: var(--content-max-width);
+  scroll-padding-top: calc(var(--header-height) + var(--content-padding));
+  scroll-margin-top: calc(var(--header-height) + var(--content-padding));
+}
+
+/* Ensure anchors have proper scroll margin */
+.main-content :target {
+  scroll-margin-top: calc(var(--header-height) + var(--content-padding));
+}
+
+/* Add padding to all direct children of main-content */
+.main-content > * {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+/* Common elements styling */
+a {
+  color: var(--link-color);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--link-hover-color);
+  text-decoration: underline;
+}
+
+/* Code blocks */
+pre, code {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  background-color: var(--code-bg);
+  color: var(--code-color);
+  border-radius: 6px;
+}
+
+pre {
+  padding: 16px;
+  overflow-x: auto;
+  border: 1px solid var(--code-border);
+}
+
+code {
+  padding: 2px 4px;
+}
+
+pre code {
+  padding: 0;
+  background-color: transparent;
+  border: none;
+}
+
+/* Syntax highlighting for Agda */
+.Keyword { color: var(--syntax-keyword); }
+.String { color: var(--syntax-string); }
+.Comment { color: var(--syntax-comment); }
+.Function { color: var(--syntax-function); }
+.InductiveConstructor { color: var(--syntax-class); }
+.CoinductiveConstructor { color: var(--syntax-class); }
+.Datatype { color: var(--syntax-class); }
+.Field { color: var(--syntax-variable); }
+.Bound { color: var(--code-color); }
+.Generalizable { color: var(--syntax-variable); }
+.Module { color: var(--syntax-keyword); }
+.Number { color: var(--syntax-variable); }
+.Postulate { color: var(--syntax-function); }
+.Primitive { color: var(--syntax-keyword); }
+.Record { color: var(--syntax-class); }
+.Hole { color: var(--syntax-operator); background-color: rgba(255, 255, 0, 0.1); }
+.Symbol { color: var(--syntax-operator); }
+.PrimitiveType { color: var(--syntax-keyword); }
+.Macro { color: var(--syntax-function); }
+
+/* Override Agda.css hover styles */
+.Agda a[href]:hover {
+  background-color: var(--hover-bg) !important;
+  color: var(--link-hover-color) !important;
+  text-decoration: underline !important;
+}
+
+.Agda [href].hover-highlight {
+  background-color: var(--hover-bg) !important;
+}
+
+/* Specific Agda syntax improvements for dark theme */
+:root.dark-theme .Agda .Keyword, 
+:root.dark-theme .Agda .Module,
+:root.dark-theme .Agda .Pragma { 
+  color: var(--syntax-keyword) !important; 
+}
+
+:root.dark-theme .Agda .Symbol,
+:root.dark-theme .Agda .Operator { 
+  color: var(--syntax-operator) !important; 
+}
+
+:root.dark-theme .Agda .InductiveConstructor,
+:root.dark-theme .Agda .CoinductiveConstructor { 
+  color: var(--syntax-variable) !important; 
+}
+
+:root.dark-theme .Agda .Datatype,
+:root.dark-theme .Agda .Record,
+:root.dark-theme .Agda .Primitive,
+:root.dark-theme .Agda .PrimitiveType { 
+  color: var(--syntax-class) !important; 
+}
+
+:root.dark-theme .Agda .String { 
+  color: var(--syntax-string) !important; 
+}
+
+:root.dark-theme .Agda .Comment { 
+  color: var(--syntax-comment) !important; 
+}
+
+:root.dark-theme .Agda .Function,
+:root.dark-theme .Agda .Macro,
+:root.dark-theme .Agda .Postulate { 
+  color: var(--syntax-function) !important; 
+}
+
+:root.dark-theme .Agda .Bound,
+:root.dark-theme .Agda .Generalizable { 
+  color: var(--code-color) !important; 
+} 

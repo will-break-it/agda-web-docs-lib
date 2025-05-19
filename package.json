@@ -1,0 +1,68 @@
+{
+  "name": "agda-web-docs-lib",
+  "version": "0.1.0",
+  "description": "Library for enhancing Agda-generated HTML documentation",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "agda-docs": "./dist/cli.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/will-break-it/agda-web-docs-lib.git"
+  },
+  "homepage": "https://github.com/will-break-it/agda-web-docs-lib#readme",
+  "bugs": {
+    "url": "https://github.com/will-break-it/agda-web-docs-lib/issues"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc && chmod +x ./dist/cli.js && cp -r src/styles dist/",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
+    "watch": "tsc -w",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run lint && npm test",
+    "preversion": "npm run lint",
+    "version": "npm run format && git add -A src",
+    "postversion": "git push && git push --tags",
+    "postinstall": "chmod +x ./dist/cli.js"
+  },
+  "keywords": [
+    "agda",
+    "documentation",
+    "html",
+    "renderer",
+    "formal-verification",
+    "formal-methods"
+  ],
+  "author": "William Wolff <wolff.william@pm.me>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.1",
+    "@types/jest": "^29.5.0",
+    "@types/jsdom": "^21.1.6",
+    "@types/node": "^20.11.24",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.5.0",
+    "prettier": "^3.0.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "fs-extra": "^11.1.1",
+    "jsdom": "^24.0.0"
+  }
+}
