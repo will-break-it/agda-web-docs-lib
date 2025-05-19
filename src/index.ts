@@ -1,2 +1,2 @@
-export { AgdaDocsTransformer } from "./transformer";
-export type { AgdaDocsConfig, ModuleInfo } from "./types";
+export { AgdaDocsTransformer } from './transformer';
+export type { AgdaDocsConfig, ModuleInfo } from './types';
