@@ -78,6 +78,12 @@ program
         process.exit(1);
       }
 
+      // Add a progress bar
+      console.log(`Processing ${files.length} HTML files...`);
+      const progressBarWidth = 40;
+      let progressCount = 0;
+
+      // Process each file with progress updates
       for (const file of files) {
         const inputPath = path.join(inputDir, file);
         const outputPath = path.join(outputDir, file);
@@ -85,8 +91,19 @@ program
         transformer.setContent(content);
         const processed = transformer.transform();
         fs.writeFileSync(outputPath, processed);
-      }
 
+        // Update progress
+        progressCount++;
+        const percent = Math.round((progressCount / files.length) * 100);
+        const barLength = Math.round((progressCount / files.length) * progressBarWidth);
+        const bar = '='.repeat(barLength) + ' '.repeat(progressBarWidth - barLength);
+        
+        // Clear line and update progress bar (works in most terminals)
+        process.stdout.write(`\r[${bar}] ${percent}% (${progressCount}/${files.length})`);
+      }
+      
+      // Add a newline after the progress bar is complete
+      process.stdout.write('\n');
       console.log('Successfully processed', files.length, 'HTML files');
     } catch (error: unknown) {
       if (error instanceof Error) {
