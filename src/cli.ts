@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { Worker } from 'worker_threads';
 import { cpus } from 'os';
 import { AgdaDocsIndexer } from './indexer';
+import { AgdaDocsSearcher } from './search';
 
 const program = new Command();
 
@@ -31,7 +32,7 @@ function processFileBatch(
   inputDir: string,
   outputDir: string,
   files: string[],
-  config: any
+  config: Record<string, unknown>
 ): Promise<number> {
   return new Promise((resolve, reject) => {
     // Create a worker script path
@@ -47,6 +48,7 @@ function processFileBatch(
         const path = require('path');
         const { AgdaDocsTransformer } = require('./transformer');
         const { AgdaDocsIndexer } = require('./indexer');
+        const { AgdaDocsSearcher } = require('./search');
 
         // Process each file in the batch
         async function processBatch() {
@@ -114,13 +116,10 @@ function processFileBatch(
       },
     });
 
-    // Track processed files
-    let processedCount = 0;
-
     // Handle messages from worker
     worker.on('message', (message) => {
       if (message.type === 'progress') {
-        processedCount++;
+        // File processed, could update progress here if needed
       } else if (message.type === 'error') {
         console.error(`Error processing ${message.file}: ${message.error}`);
       } else if (message.type === 'complete') {
@@ -223,13 +222,30 @@ program
         process.exit(1);
       }
 
-      console.log('Building indexes for cross-file references...');
-
       // Create a progress bar for the indexing phase
       const indexingProgressBar = createProgressBar();
 
       // Build position mappings, passing the progress callback
       AgdaDocsIndexer.buildPositionMappings(inputDir, indexingProgressBar);
+      
+      // Build search index
+      const searchIndex = AgdaDocsSearcher.buildSearchIndex(
+        AgdaDocsIndexer.getGlobalMappings(),
+        inputDir
+      );
+      
+      // Write search index to output directory
+      console.log('Writing search index to output directory...');
+      AgdaDocsSearcher.writeSearchIndex(outputDir, searchIndex);
+      
+      // Copy search script to output directory
+      console.log('Copying search script to output directory...');
+      const searchScriptPath = AgdaDocsSearcher.getSearchScriptPath();
+      if (searchScriptPath) {
+        fs.copyFileSync(searchScriptPath, path.join(outputDir, 'search.js'));
+      } else {
+        console.warn('Warning: Could not find search script to copy');
+      }
 
       // Determine number of workers to use
       const numWorkers = Math.min(
@@ -245,12 +261,6 @@ program
       // Create progress tracking with progress bar
       let processedCount = 0;
       const processingProgressBar = createProgressBar();
-
-      // Update progress function
-      const updateProgress = () => {
-        processedCount++;
-        processingProgressBar(processedCount, files.length);
-      };
 
       // Split files into batches for workers
       const batchSize = Math.ceil(files.length / numWorkers);
@@ -271,6 +281,11 @@ program
 
       // Wait for all workers to complete
       await Promise.all(workerPromises);
+
+      // Build search index after all files are processed
+      const positionMappings = AgdaDocsIndexer.getGlobalMappings();
+      const searchIndexAfterProcessing = AgdaDocsSearcher.buildSearchIndex(positionMappings, outputDir);
+      AgdaDocsSearcher.writeSearchIndex(outputDir, searchIndexAfterProcessing);
 
       console.log('Successfully processed', files.length, 'HTML files');
     } catch (error: unknown) {

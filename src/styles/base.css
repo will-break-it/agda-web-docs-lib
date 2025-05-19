@@ -7,6 +7,8 @@
   --primary-color: #1a1a1a;
   --border-color: #e0e0e0;
   --hover-bg: rgba(0, 119, 204, 0.1);
+  --hover-transform: translateY(-1px);
+  --hover-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --content-padding: 40px;
   --background-color: #ffffff;
@@ -25,12 +27,15 @@
   --code-border: rgba(0, 0, 0, 0.05);
   --sidebar-border-color: var(--border-color);
   --header-border-color: var(--border-color);
+  --header-button-padding: 8px;
+  --header-button-border-radius: 6px;
 }
 
 :root.dark-theme {
   --primary-color: #e4e4e4;
   --border-color: #555555;
   --hover-bg: rgba(88, 166, 255, 0.2);
+  --hover-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
   --background-color: #121212;
   --code-bg: rgba(255, 255, 255, 0.07);
   --code-color: #e4e4e4;
@@ -90,36 +95,58 @@ header {
   gap: 12px;
 }
 
-.back-button {
+/* Header button/link shared styles */
+.back-button,
+.github-link,
+.theme-toggle,
+.search-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--primary-color);
-  text-decoration: none;
-  font-size: 15px;
-  padding: 8px 16px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: var(--header-button-border-radius);
   transition: all 0.2s ease;
+  padding: var(--header-button-padding);
+  position: relative;
 }
 
-.back-button:hover {
+.back-button:hover,
+.github-link:hover,
+.theme-toggle:hover,
+.search-button:hover {
   background-color: var(--hover-bg);
+  color: var(--link-hover-color);
+  transform: var(--hover-transform);
+  box-shadow: var(--hover-shadow);
+}
+
+.back-button:active,
+.github-link:active,
+.theme-toggle:active,
+.search-button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Individual button styles - keeping only specific differences */
+.back-button {
+  text-decoration: none;
+  font-size: 15px;
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  margin: 0 4px;
 }
 
 .github-link {
-  color: var(--primary-color);
-  display: flex;
-  align-items: center;
-  padding: 8px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-.github-link:hover {
-  background-color: var(--hover-bg);
+  text-decoration: none;
+  width: 32px;
+  height: 32px;
+  margin: 0 4px;
 }
 
 .github-icon {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
 }
 
 /* Theme toggler styles */
@@ -127,22 +154,13 @@ header {
   background: none;
   border: none;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary-color);
-  padding: 8px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-.theme-toggle:hover {
-  background-color: var(--hover-bg);
+  width: 32px;
+  height: 32px;
 }
 
 .theme-toggle svg {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
 }
 
 :root:not(.dark-theme) .dark-icon {
@@ -222,6 +240,8 @@ header {
 .module-link.active {
   background-color: var(--hover-bg);
   font-weight: 500;
+  border-left: 3px solid var(--link-color);
+  padding-left: 9px;
 }
 
 /* Main content styles */

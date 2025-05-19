@@ -31,8 +31,8 @@ export class AgdaDocsIndexer {
     inputDir: string,
     progressCallback?: (current: number, total: number) => void
   ): void {
-    console.log('Building position-to-line mappings index...');
     AgdaDocsIndexer.globalPositionMappings = {};
+    console.log('Building indexes for cross-file references...');
 
     try {
       // First pass: process all files to build position-to-line mappings
@@ -73,8 +73,6 @@ export class AgdaDocsIndexer {
           progressCallback(processedCount, files.length);
         }
       }
-
-      console.log('Completed building position mappings index');
     } catch (error) {
       console.error('Error building position mappings index:', error);
     }
@@ -129,7 +127,7 @@ export class AgdaDocsIndexer {
    */
   private static findLineNumberForElement(element: Element): number | null {
     // Find the nearest code block ancestor
-    let codeBlock = element.closest('pre.Agda');
+    const codeBlock = element.closest('pre.Agda');
     if (!codeBlock) return null;
 
     // Find the code container within the code block

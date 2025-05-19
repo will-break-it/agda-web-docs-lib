@@ -21,7 +21,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "rm -rf dist && tsc && chmod +x ./dist/cli.js && cp -r src/styles dist/",
+    "build": "rm -rf dist && tsc && chmod +x ./dist/cli.js && cp -r src/styles dist/ && cp -r src/scripts dist/",
     "test": "jest --passWithNoTests",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",

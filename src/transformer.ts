@@ -1,6 +1,7 @@
 import { JSDOM } from 'jsdom';
 import { AgdaDocsConfig, ModuleInfo } from './types';
 import { AgdaDocsIndexer } from './indexer';
+import { AgdaDocsSearcher } from './search';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -33,10 +34,35 @@ export class AgdaDocsTransformer {
     this.addHeader();
     this.addSidebar();
     this.addLineNumbersToCodeBlocks();
+    this.addSearchFunctionality();
 
     // Use the global mappings from the indexer for link transformation
     this.transformAgdaLinks();
     return this.dom.serialize();
+  }
+  
+  /**
+   * Adds search functionality to the page
+   */
+  private addSearchFunctionality(): void {
+    const document = this.dom.window.document;
+    
+    // Get the path to the search script
+    const searchScriptPath = AgdaDocsSearcher.getSearchScriptPath();
+    
+    if (searchScriptPath && fs.existsSync(searchScriptPath)) {
+      try {
+        // Add script reference to the document - the script will be copied when cli.ts processes files
+        const searchScript = document.createElement('script');
+        searchScript.src = 'search.js';
+        searchScript.defer = true;
+        document.body.appendChild(searchScript);
+      } catch (error) {
+        console.error('Error adding search script:', error);
+      }
+    } else {
+      console.warn('Search script not found at path:', searchScriptPath);
+    }
   }
 
   /**
@@ -432,8 +458,8 @@ export class AgdaDocsTransformer {
     const document = this.dom.window.document;
     const head = document.head;
 
-    // Try to find the CSS file in different possible locations
-    const possiblePaths = [
+    // Try to find the CSS files in different possible locations
+    const possibleBasePaths = [
       // Production path (when installed as a package)
       path.join(__dirname, 'styles', 'base.css'),
       // Development path
@@ -442,8 +468,18 @@ export class AgdaDocsTransformer {
       path.join(__dirname, '..', '..', 'src', 'styles', 'base.css'),
     ];
 
+    const possibleSearchPaths = [
+      // Production path (when installed as a package)
+      path.join(__dirname, 'styles', 'search.css'),
+      // Development path
+      path.join(__dirname, '..', 'src', 'styles', 'search.css'),
+      // Alternative development path
+      path.join(__dirname, '..', '..', 'src', 'styles', 'search.css'),
+    ];
+
+    // Load base CSS
     let baseCss: string | null = null;
-    for (const cssPath of possiblePaths) {
+    for (const cssPath of possibleBasePaths) {
       try {
         baseCss = fs.readFileSync(cssPath, 'utf-8');
         break;
@@ -452,6 +488,18 @@ export class AgdaDocsTransformer {
       }
     }
 
+    // Load search CSS
+    let searchCss: string | null = null;
+    for (const cssPath of possibleSearchPaths) {
+      try {
+        searchCss = fs.readFileSync(cssPath, 'utf-8');
+        break;
+      } catch (error) {
+        continue;
+      }
+    }
+
+    // Add base styles
     if (baseCss) {
       const style = document.createElement('style');
       style.textContent = baseCss;
@@ -477,6 +525,15 @@ export class AgdaDocsTransformer {
       const style = document.createElement('style');
       style.textContent = fallbackStyles;
       head.appendChild(style);
+    }
+    
+    // Add search styles
+    if (searchCss) {
+      const searchStyle = document.createElement('style');
+      searchStyle.textContent = searchCss;
+      head.appendChild(searchStyle);
+    } else {
+      console.warn('Warning: Could not load search.css styles');
     }
   }
 
