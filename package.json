@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "agda-docs": "./dist/cli.js"
+    "agda-docs": "dist/cli.js"
   },
   "repository": {
     "type": "git",
