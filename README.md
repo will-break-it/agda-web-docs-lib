@@ -7,6 +7,7 @@ A library for enhancing Agda HTML documentation with modern web features, includ
 - Line numbers and line highlighting
 - Cross-file reference resolution with position-to-line mapping
 - Code block copying
+- Full-text search (Ctrl+K/Cmd+K)
 
 ## Installation
 
