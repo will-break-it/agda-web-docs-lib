@@ -33,7 +33,7 @@ export class AgdaDocsTransformer {
     this.addHeader();
     this.addSidebar();
     this.addLineNumbersToCodeBlocks();
-    
+
     // Use the global mappings from the indexer for link transformation
     this.transformAgdaLinks();
     return this.dom.serialize();
@@ -45,101 +45,100 @@ export class AgdaDocsTransformer {
    */
   private transformAgdaLinks(): void {
     const document = this.dom.window.document;
-    
+
     // Get all links in the document
     const links = document.querySelectorAll('a[href]');
-    
+
     // Get the mappings for the current file from global mappings in the indexer
     const allMappings = AgdaDocsIndexer.getGlobalMappings();
-    const currentFileMappings = this.currentFile ? 
-      allMappings[this.currentFile] || {} : 
-      {};
-    
+    const currentFileMappings = this.currentFile ? allMappings[this.currentFile] || {} : {};
+
     // Track unmapped links for warning messages
-    const unmappedLinks: { href: string, element: Element, text: string }[] = [];
-    
-    links.forEach(link => {
+    const unmappedLinks: { href: string; element: Element; text: string }[] = [];
+
+    links.forEach((link) => {
       const href = link.getAttribute('href');
       if (!href) return;
-      
+
       // Check if the link has a numeric fragment identifier
       // It could be either in the same file (#342) or another file (Leios.Abstract.html#342)
       const hashMatch = href.match(/(.+?\.html)?#(\d+)$/);
       if (hashMatch) {
         const filePart = hashMatch[1] || '';
         const position = hashMatch[2];
-        
+
         // If this is a reference to the current file
         if (!filePart) {
           if (currentFileMappings[position]) {
             const lineNumber = currentFileMappings[position];
-            
+
             // Preserve original with data attribute and change the href
             link.setAttribute('data-original-href', href);
             link.setAttribute('href', `#L${lineNumber}`);
-            
+
             // Add title tooltip to show both references
             link.setAttribute('title', `Line ${lineNumber} (position ${position})`);
           } else {
             // Keep original link but track for warning
-            unmappedLinks.push({ 
-              href: href, 
-              element: link, 
-              text: link.textContent || '[No text content]' 
+            unmappedLinks.push({
+              href: href,
+              element: link,
+              text: link.textContent || '[No text content]',
             });
           }
         } else {
           // This is a reference to another file
           const targetFile = filePart;
-          
+
           // Check if we have mappings for the target file
-          if (allMappings[targetFile] && 
-              allMappings[targetFile][position]) {
+          if (allMappings[targetFile] && allMappings[targetFile][position]) {
             // If we have the mapping, use it
             const lineNumber = allMappings[targetFile][position];
-            
+
             // Preserve original with data attribute and change the href
             link.setAttribute('data-original-href', href);
             link.setAttribute('href', `${targetFile}#L${lineNumber}`);
-            
+
             // Add title tooltip to show both references
             link.setAttribute('title', `Line ${lineNumber} (position ${position})`);
           } else {
             // Keep original link but track for warning
-            unmappedLinks.push({ 
-              href: href, 
-              element: link, 
-              text: link.textContent || '[No text content]' 
+            unmappedLinks.push({
+              href: href,
+              element: link,
+              text: link.textContent || '[No text content]',
             });
           }
         }
       }
     });
-    
+
     // Log warnings for unmapped links if there are any
     if (unmappedLinks.length > 0) {
       const fileName = this.currentFile || 'current file';
-      
-      console.warn(`Warning: Could not map ${unmappedLinks.length} position references to line numbers in ${fileName}`);
+
+      console.warn(
+        `Warning: Could not map ${unmappedLinks.length} position references to line numbers in ${fileName}`
+      );
       // Show all unmapped links for debugging
-      unmappedLinks.forEach(link => {
+      unmappedLinks.forEach((link) => {
         console.warn(`  - Could not map: ${link.href}`);
         console.warn(`    Text content: "${link.text}"`);
         console.warn(`    HTML: ${link.element.outerHTML}`);
       });
     }
-    
+
     // Add support script for toggling between position and line references
     this.addPositionToggleScript();
   }
-  
+
   /**
    * Adds a script that allows toggling between position references and line numbers
    */
   private addPositionToggleScript(): void {
     const document = this.dom.window.document;
     const script = document.createElement('script');
-    
+
     script.textContent = `
       (function() {
         // Support for toggling between position and line references
@@ -181,7 +180,7 @@ export class AgdaDocsTransformer {
         });
       })();
     `;
-    
+
     document.body.appendChild(script);
   }
 
@@ -211,21 +210,23 @@ export class AgdaDocsTransformer {
 
       // Get the original HTML content
       const originalContent = codeBlock.innerHTML;
-      
+
       // Split by lines for processing
       // Ensure we handle empty lines properly
       const lines = originalContent.split('\n');
-      
+
       // Create modified content with line IDs for anchors
       const lineNumbersHTML: string[] = [];
       const linesHTML: string[] = [];
 
       // Process non-empty lines only (skip the last empty line if it exists)
-      const actualLines = lines.filter((line, index) => !(index === lines.length - 1 && line.trim() === ''));
+      const actualLines = lines.filter(
+        (line, index) => !(index === lines.length - 1 && line.trim() === '')
+      );
 
       actualLines.forEach((line, index) => {
         const lineNum = index + 1;
-        
+
         // Create line number element with anchor
         lineNumbersHTML.push(
           `<a href="#L${lineNum}" id="L${lineNum}" class="line-number" data-line-number="${lineNum}">${lineNum}</a>`
@@ -237,7 +238,7 @@ export class AgdaDocsTransformer {
         linesHTML.push(`<div id="LC${lineNum}" class="code-line">${lineContent}</div>`);
       });
 
-      // Create the line numbers container 
+      // Create the line numbers container
       lineNumbers.innerHTML = lineNumbersHTML.join('');
 
       // Create the code content container
@@ -253,13 +254,13 @@ export class AgdaDocsTransformer {
           <path fill="currentColor" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path fill="currentColor" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
         </svg>
       `;
-      copyButton.title = "Copy code";
+      copyButton.title = 'Copy code';
       codeBlock.classList.add('has-copy-button');
-      
+
       // Replace the original pre with our new structure
       container.appendChild(lineNumbers);
       container.appendChild(codeContent);
-      
+
       // Replace the content of the pre tag
       codeBlock.innerHTML = '';
       codeBlock.appendChild(container);

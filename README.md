@@ -50,7 +50,8 @@ npx agda-docs process -p 4
 ### Programmatic Usage
 
 ```typescript
-import { AgdaDocsTransformer, AgdaDocsIndexer } from 'agda-web-docs-lib';
+import { AgdaDocsTransformer } from 'agda-web-docs-lib';
+import { AgdaDocsIndexer } from 'agda-web-docs-lib/dist/indexer';
 
 // Config options
 const config = {
@@ -60,8 +61,8 @@ const config = {
   githubUrl: 'https://github.com/your-user/your-project'
 };
 
-// Build necessary indexes
-AgdaDocsIndexer.buildAllIndexes('path/to/html');
+// Build position mappings index
+AgdaDocsIndexer.buildPositionMappings('path/to/html');
 
 // Process a single file
 const transformer = new AgdaDocsTransformer(config);
@@ -82,11 +83,9 @@ To toggle between position references and line numbers, press `Alt+P` on any pag
 
 ### Indexing System
 
-The library builds several indexes during processing:
+The library builds the following index during processing:
 
 1. **Position Mappings**: Maps Agda's numeric position references to actual line numbers
-2. **Type Definition Index** (Upcoming): Will support hovering over types to see their definitions
-3. **Search Index** (Upcoming): Will enable full-text search across all modules
 
 ## Configuration Options
 

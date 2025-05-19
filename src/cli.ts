@@ -13,7 +13,7 @@ const program = new Command();
 const DEFAULT_CONFIG_FILES = ['agda-docs.config.json'];
 
 // Determine optimal number of workers based on CPU cores
-const MAX_WORKERS = Math.max(1, cpus().length - 1); // Leave one core free for system
+const MAX_WORKERS = Math.max(1, cpus().length);
 
 function findConfigFile(): string | null {
   const currentDir = process.cwd();
@@ -28,18 +28,20 @@ function findConfigFile(): string | null {
 
 // Worker function to process a batch of files
 function processFileBatch(
-  inputDir: string, 
-  outputDir: string, 
-  files: string[], 
+  inputDir: string,
+  outputDir: string,
+  files: string[],
   config: any
 ): Promise<number> {
   return new Promise((resolve, reject) => {
     // Create a worker script path
     const workerScriptPath = path.resolve(__dirname, 'worker.js');
-    
+
     // Check if worker script exists, if not create it
     if (!fs.existsSync(workerScriptPath)) {
-      fs.writeFileSync(workerScriptPath, `
+      fs.writeFileSync(
+        workerScriptPath,
+        `
         const { parentPort, workerData } = require('worker_threads');
         const fs = require('fs');
         const path = require('path');
@@ -94,12 +96,13 @@ function processFileBatch(
               error: error.message || 'Unknown worker error' 
             });
           });
-      `);
+      `
+      );
     }
-    
+
     // Get global mappings to pass to worker
     const globalMappings = AgdaDocsIndexer.getGlobalMappings();
-    
+
     // Create a worker
     const worker = new Worker(workerScriptPath, {
       workerData: {
@@ -107,13 +110,13 @@ function processFileBatch(
         outputDir,
         files,
         config,
-        globalMappings
-      }
+        globalMappings,
+      },
     });
-    
+
     // Track processed files
     let processedCount = 0;
-    
+
     // Handle messages from worker
     worker.on('message', (message) => {
       if (message.type === 'progress') {
@@ -125,12 +128,12 @@ function processFileBatch(
         resolve(message.count);
       }
     });
-    
+
     // Handle worker errors
     worker.on('error', (error) => {
       reject(new Error(`Worker error: ${error.message}`));
     });
-    
+
     // Handle worker exit
     worker.on('exit', (code) => {
       if (code !== 0) {
@@ -148,10 +151,10 @@ function createProgressBar(width: number = 40): (current: number, total: number)
     const percent = Math.round((current / total) * 100);
     const barLength = Math.round((current / total) * width);
     const bar = '='.repeat(barLength) + ' '.repeat(width - barLength);
-    
+
     // Clear line and update progress bar
     process.stdout.write(`\r[${bar}] ${percent}% (${current}/${total})`);
-    
+
     // Add a newline when complete
     if (current === total) {
       process.stdout.write('\n');
@@ -221,53 +224,54 @@ program
       }
 
       console.log('Building indexes for cross-file references...');
-      
+
       // Create a progress bar for the indexing phase
       const indexingProgressBar = createProgressBar();
-      
-      // Build all indexes, passing the progress callback
-      AgdaDocsIndexer.buildAllIndexes(inputDir, {}, indexingProgressBar);
-      
+
+      // Build position mappings, passing the progress callback
+      AgdaDocsIndexer.buildPositionMappings(inputDir, indexingProgressBar);
+
       // Determine number of workers to use
       const numWorkers = Math.min(
         parseInt(options.parallel) || MAX_WORKERS,
         MAX_WORKERS,
         files.length // Don't use more workers than files
       );
-      
-      console.log(`Processing ${files.length} HTML files using ${numWorkers} worker${numWorkers > 1 ? 's' : ''}...`);
-      
+
+      console.log(
+        `Processing ${files.length} HTML files using ${numWorkers} worker${numWorkers > 1 ? 's' : ''}...`
+      );
+
       // Create progress tracking with progress bar
       let processedCount = 0;
       const processingProgressBar = createProgressBar();
-      
+
       // Update progress function
       const updateProgress = () => {
         processedCount++;
         processingProgressBar(processedCount, files.length);
       };
-      
+
       // Split files into batches for workers
       const batchSize = Math.ceil(files.length / numWorkers);
       const batches: string[][] = [];
-      
+
       for (let i = 0; i < files.length; i += batchSize) {
         batches.push(files.slice(i, i + batchSize));
       }
-      
+
       // Process batches in parallel
-      const workerPromises = batches.map(batch => {
-        return processFileBatch(inputDir, outputDir, batch, config)
-          .then(count => {
-            processedCount += count;
-            processingProgressBar(processedCount, files.length);
-            return count;
-          });
+      const workerPromises = batches.map((batch) => {
+        return processFileBatch(inputDir, outputDir, batch, config).then((count) => {
+          processedCount += count;
+          processingProgressBar(processedCount, files.length);
+          return count;
+        });
       });
-      
+
       // Wait for all workers to complete
       await Promise.all(workerPromises);
-      
+
       console.log('Successfully processed', files.length, 'HTML files');
     } catch (error: unknown) {
       if (error instanceof Error) {
