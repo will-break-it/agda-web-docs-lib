@@ -40,16 +40,16 @@ export class AgdaDocsTransformer {
     this.transformAgdaLinks();
     return this.dom.serialize();
   }
-  
+
   /**
    * Adds search functionality to the page
    */
   private addSearchFunctionality(): void {
     const document = this.dom.window.document;
-    
+
     // Get the path to the search script
     const searchScriptPath = AgdaDocsSearcher.getSearchScriptPath();
-    
+
     if (searchScriptPath && fs.existsSync(searchScriptPath)) {
       try {
         // Add script reference to the document - the script will be copied when cli.ts processes files
@@ -526,7 +526,7 @@ export class AgdaDocsTransformer {
       style.textContent = fallbackStyles;
       head.appendChild(style);
     }
-    
+
     // Add search styles
     if (searchCss) {
       const searchStyle = document.createElement('style');

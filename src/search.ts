@@ -30,10 +30,7 @@ export class AgdaDocsSearcher {
   /**
    * Generates the search index for all files in the inputDir
    */
-  public static buildSearchIndex(
-    mappings: PositionMappings,
-    inputDir: string
-  ): SearchIndex {
+  public static buildSearchIndex(mappings: PositionMappings, inputDir: string): SearchIndex {
     console.log('Building search index...');
     const index: SearchIndex = {};
     let fileCount = 0;
@@ -46,7 +43,7 @@ export class AgdaDocsSearcher {
       files.forEach((file) => {
         const filePath = path.join(inputDir, file);
         const entries = this.extractSearchEntriesFromFile(filePath, mappings[file] || {});
-        
+
         if (entries.length > 0) {
           index[file] = entries;
           fileCount++;
@@ -77,7 +74,7 @@ export class AgdaDocsSearcher {
 
       // Extract module name
       const moduleName = path.basename(filePath, '.html');
-      
+
       // Add module entry
       entries.push({
         type: 'module',
@@ -89,65 +86,65 @@ export class AgdaDocsSearcher {
       codeBlocks.forEach((block) => {
         const codeLines = block.querySelectorAll('.code-line');
         const allLines = Array.from(codeLines);
-        
+
         allLines.forEach((line, index) => {
           const lineId = line.id;
           if (!lineId) return;
-          
+
           const lineNumber = parseInt(lineId.replace('LC', ''));
           if (isNaN(lineNumber)) return;
-          
+
           // Get the full line content
           const lineContent = line.textContent?.trim();
           if (!lineContent) return;
-          
+
           // Get surrounding context (1 line before and 1 line after)
           let contextBefore = '';
           let contextAfter = '';
-          
+
           if (index > 0) {
             contextBefore = allLines[index - 1].textContent?.trim() || '';
           }
-          
+
           if (index < allLines.length - 1) {
             contextAfter = allLines[index + 1].textContent?.trim() || '';
           }
-          
+
           // Full context with line before, current line, and line after
           const fullContext = [contextBefore, lineContent, contextAfter]
-            .filter(line => line) // Remove empty lines
+            .filter((line) => line) // Remove empty lines
             .join('\n');
-          
+
           // Add the whole line as a searchable entry
           entries.push({
             type: 'code',
             content: lineContent,
             lineNumber,
-            context: fullContext
+            context: fullContext,
           });
-          
+
           // Also still get individual identifiers
           const identifiers = line.querySelectorAll('[id]');
-          
+
           identifiers.forEach((identifier) => {
             const id = identifier.id;
             if (!id || /^\d+$/.test(id)) return; // Skip numeric IDs
-            
+
             // Get the text content of the identifier
             const content = identifier.textContent?.trim();
             if (!content) return;
-            
+
             // Get position mapping if available
             const position = Object.keys(positionMappings).find(
               (pos) => positionMappings[pos] === lineNumber
             );
-            
+
             entries.push({
               type: 'code',
               content,
               lineNumber,
               position,
-              context: fullContext
+              context: fullContext,
             });
           });
         });
@@ -158,11 +155,11 @@ export class AgdaDocsSearcher {
       headers.forEach((header) => {
         const content = header.textContent?.trim();
         if (!content) return;
-        
+
         entries.push({
           type: 'header',
           content,
-          context: content
+          context: content,
         });
       });
 
@@ -209,4 +206,4 @@ export class AgdaDocsSearcher {
     console.warn('Warning: Could not find search.js script');
     return '';
   }
-} 
+}

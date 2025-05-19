@@ -274,26 +274,13 @@
       
       resultEl.appendChild(pathContainer);
       
-      // Add click handlers - using preventDefault to handle navigation ourselves
-      resultEl.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        // Update selection index
-        selectedResultIndex = parseInt(resultEl.getAttribute('data-index') || '0');
-        highlightSelectedResult();
-        // Navigate to result
-        navigateToResult(result);
-      });
-      
-      // Backup click handler
+      // Add event handlers for search results
       resultEl.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
         // Update selection index
         selectedResultIndex = parseInt(resultEl.getAttribute('data-index') || '0');
         highlightSelectedResult();
-        // Navigate to result
-        navigateToResult(result);
+        // Close the search overlay (the navigation will happen naturally)
+        toggleSearch();
       });
       
       // Add hover effect manually

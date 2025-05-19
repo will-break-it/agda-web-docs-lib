@@ -227,17 +227,17 @@ program
 
       // Build position mappings, passing the progress callback
       AgdaDocsIndexer.buildPositionMappings(inputDir, indexingProgressBar);
-      
+
       // Build search index
       const searchIndex = AgdaDocsSearcher.buildSearchIndex(
         AgdaDocsIndexer.getGlobalMappings(),
         inputDir
       );
-      
+
       // Write search index to output directory
       console.log('Writing search index to output directory...');
       AgdaDocsSearcher.writeSearchIndex(outputDir, searchIndex);
-      
+
       // Copy search script to output directory
       console.log('Copying search script to output directory...');
       const searchScriptPath = AgdaDocsSearcher.getSearchScriptPath();
@@ -284,7 +284,10 @@ program
 
       // Build search index after all files are processed
       const positionMappings = AgdaDocsIndexer.getGlobalMappings();
-      const searchIndexAfterProcessing = AgdaDocsSearcher.buildSearchIndex(positionMappings, outputDir);
+      const searchIndexAfterProcessing = AgdaDocsSearcher.buildSearchIndex(
+        positionMappings,
+        outputDir
+      );
       AgdaDocsSearcher.writeSearchIndex(outputDir, searchIndexAfterProcessing);
 
       console.log('Successfully processed', files.length, 'HTML files');
