@@ -401,6 +401,7 @@ pre code {
   height: 1.5em;
   padding: 0;
   margin: 0;
+  position: relative;
 }
 
 .line-number:hover {
@@ -499,18 +500,52 @@ pre.Agda.has-copy-button {
   background-color: var(--hover-bg);
 }
 
-.copy-code-button.copy-success {
-  background-color: #34d399;
+.copy-code-button:active {
+  background-color: var(--hover-bg);
   opacity: 1;
 }
 
+.copy-code-button.copy-success {
+  background-color: var(--hover-bg);
+  opacity: 1;
+  border-color: rgba(0, 119, 204, 0.5);
+}
+
+:root.dark-theme .copy-code-button.copy-success {
+  border-color: rgba(88, 166, 255, 0.5);
+}
+
 .copy-code-button.copy-success svg {
-  color: #065f46;
+  color: var(--primary-color);
 }
 
 .copy-code-button svg {
   display: block;
   color: var(--primary-color);
+}
+
+/* Line number highlight styles */
+.line-number[data-line-number].highlighted,
+.line-number[href].active {
+  color: var(--primary-color) !important;
+  font-weight: 500;
+}
+
+.line-number[data-line-number].highlighted::before,
+.line-number[href].active::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background-color: rgba(0, 119, 204, 0.5);
+  border-radius: 2px;
+}
+
+:root.dark-theme .line-number[data-line-number].highlighted::before,
+:root.dark-theme .line-number[href].active::before {
+  background-color: rgba(88, 166, 255, 0.5);
 }
 
 /* When copy-pasting, only select the code, not the line numbers */

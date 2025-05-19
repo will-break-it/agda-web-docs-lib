@@ -157,14 +157,20 @@ export class AgdaDocsTransformer {
             lineNum.addEventListener('click', function(e) {
               e.preventDefault(); // Prevent default hash navigation
               
-              // Remove highlight from all lines first
+              // Remove highlight from all lines and line numbers first
               document.querySelectorAll('.code-line.highlighted').forEach(line => {
                 line.classList.remove('highlighted');
+              });
+              document.querySelectorAll('.line-number.highlighted').forEach(num => {
+                num.classList.remove('highlighted');
               });
               
               // Get the line number
               const num = this.getAttribute('data-line-number');
               if (!num) return;
+              
+              // Add highlight class to clicked line number
+              this.classList.add('highlighted');
               
               // Find the corresponding code line and highlight it
               const lineId = 'LC' + num;
@@ -192,6 +198,9 @@ export class AgdaDocsTransformer {
           document.querySelectorAll('.code-line.highlighted').forEach(line => {
             line.classList.remove('highlighted');
           });
+          document.querySelectorAll('.line-number.highlighted').forEach(num => {
+            num.classList.remove('highlighted');
+          });
           
           const hash = window.location.hash;
           if (hash && hash.startsWith('#L')) {
@@ -199,10 +208,16 @@ export class AgdaDocsTransformer {
             const lineNum = hash.substring(2);
             const lineId = 'LC' + lineNum;
             const codeLine = document.getElementById(lineId);
+            const lineNumEl = document.getElementById('L' + lineNum);
             
             if (codeLine) {
               // Highlight the target line
               codeLine.classList.add('highlighted');
+              
+              // Highlight the corresponding line number
+              if (lineNumEl) {
+                lineNumEl.classList.add('highlighted');
+              }
               
               // Scroll the line into view
               setTimeout(() => {
