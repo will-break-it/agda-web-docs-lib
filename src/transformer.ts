@@ -1,11 +1,13 @@
 import { JSDOM } from 'jsdom';
 import { AgdaDocsConfig, ModuleInfo } from './types';
+import { AgdaDocsIndexer } from './indexer';
 import * as fs from 'fs';
 import * as path from 'path';
 
 export class AgdaDocsTransformer {
   private config: AgdaDocsConfig;
   private dom: JSDOM;
+  private currentFile: string = '';
 
   constructor(config: AgdaDocsConfig) {
     this.config = config;
@@ -15,8 +17,11 @@ export class AgdaDocsTransformer {
   /**
    * Sets the HTML content to transform
    */
-  public setContent(content: string): void {
+  public setContent(content: string, filename?: string): void {
     this.dom = new JSDOM(content);
+    if (filename) {
+      this.currentFile = filename;
+    }
   }
 
   /**
@@ -28,7 +33,164 @@ export class AgdaDocsTransformer {
     this.addHeader();
     this.addSidebar();
     this.addLineNumbersToCodeBlocks();
+    
+    // Use the global mappings from the indexer for link transformation
+    this.transformAgdaLinks();
     return this.dom.serialize();
+  }
+
+  /**
+   * Transforms Agda-generated numeric position references to line number references
+   * so that they work with the line highlighting feature
+   */
+  private transformAgdaLinks(): void {
+    const document = this.dom.window.document;
+    
+    // Get all links in the document
+    const links = document.querySelectorAll('a[href]');
+    
+    // Get the mappings for the current file from global mappings in the indexer
+    const allMappings = AgdaDocsIndexer.getGlobalMappings();
+    const currentFileMappings = this.currentFile ? 
+      allMappings[this.currentFile] || {} : 
+      {};
+    
+    // Track unmapped links for warning messages
+    const unmappedLinks: { href: string, element: Element, text: string }[] = [];
+    
+    links.forEach(link => {
+      const href = link.getAttribute('href');
+      if (!href) return;
+      
+      // Check if the link has a numeric fragment identifier
+      // It could be either in the same file (#342) or another file (Leios.Abstract.html#342)
+      const hashMatch = href.match(/(.+?\.html)?#(\d+)$/);
+      if (hashMatch) {
+        const filePart = hashMatch[1] || '';
+        const position = hashMatch[2];
+        
+        // If this is a reference to the current file
+        if (!filePart) {
+          if (currentFileMappings[position]) {
+            const lineNumber = currentFileMappings[position];
+            
+            // Preserve original with data attribute and change the href
+            link.setAttribute('data-original-href', href);
+            link.setAttribute('href', `#L${lineNumber}`);
+            
+            // Add title tooltip to show both references
+            link.setAttribute('title', `Line ${lineNumber} (position ${position})`);
+          } else {
+            // Keep original link but track for warning
+            unmappedLinks.push({ 
+              href: href, 
+              element: link, 
+              text: link.textContent || '[No text content]' 
+            });
+          }
+        } else {
+          // This is a reference to another file
+          const targetFile = filePart;
+          
+          // Check if we have mappings for the target file
+          if (allMappings[targetFile] && 
+              allMappings[targetFile][position]) {
+            // If we have the mapping, use it
+            const lineNumber = allMappings[targetFile][position];
+            
+            // Preserve original with data attribute and change the href
+            link.setAttribute('data-original-href', href);
+            link.setAttribute('href', `${targetFile}#L${lineNumber}`);
+            
+            // Add title tooltip to show both references
+            link.setAttribute('title', `Line ${lineNumber} (position ${position})`);
+          } else {
+            // Keep original link but track for warning
+            unmappedLinks.push({ 
+              href: href, 
+              element: link, 
+              text: link.textContent || '[No text content]' 
+            });
+          }
+        }
+      }
+    });
+    
+    // Log warnings for unmapped links if there are any
+    if (unmappedLinks.length > 0) {
+      const fileName = this.currentFile || 'current file';
+      
+      console.warn(`Warning: Could not map ${unmappedLinks.length} position references to line numbers in ${fileName}`);
+      // Show all unmapped links for debugging
+      unmappedLinks.forEach(link => {
+        console.warn(`  - Could not map: ${link.href}`);
+        console.warn(`    Text content: "${link.text}"`);
+        console.warn(`    HTML: ${link.element.outerHTML}`);
+      });
+    }
+    
+    // Add support script for toggling between position and line references
+    this.addPositionToggleScript();
+  }
+  
+  /**
+   * Adds a script that allows toggling between position references and line numbers
+   */
+  private addPositionToggleScript(): void {
+    const document = this.dom.window.document;
+    const script = document.createElement('script');
+    
+    script.textContent = `
+      (function() {
+        // Support for toggling between position and line references
+        document.addEventListener('keydown', function(event) {
+          // Alt+P toggles position mode
+          if (event.altKey && event.key === 'p') {
+            const links = document.querySelectorAll('a[data-original-href]');
+            links.forEach(link => {
+              const currentHref = link.getAttribute('href');
+              const originalHref = link.getAttribute('data-original-href');
+              
+              // Toggle between original position references and line numbers
+              link.setAttribute('data-original-href', currentHref);
+              link.setAttribute('href', originalHref);
+            });
+            
+            // Show notification
+            const notification = document.createElement('div');
+            notification.style.position = 'fixed';
+            notification.style.bottom = '20px';
+            notification.style.right = '20px';
+            notification.style.padding = '10px 20px';
+            notification.style.background = 'rgba(0,0,0,0.8)';
+            notification.style.color = 'white';
+            notification.style.borderRadius = '4px';
+            notification.style.zIndex = '9999';
+            notification.style.transition = 'opacity 0.5s';
+            notification.textContent = 'Reference mode toggled';
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+              notification.style.opacity = '0';
+              setTimeout(() => {
+                document.body.removeChild(notification);
+              }, 500);
+            }, 2000);
+          }
+        });
+      })();
+    `;
+    
+    document.body.appendChild(script);
+  }
+
+  /**
+   * Determines if the given file path refers to the current file
+   */
+  private isCurrentFile(filePath: string): boolean {
+    if (!filePath) return true;
+    return filePath === this.currentFile;
   }
 
   /**

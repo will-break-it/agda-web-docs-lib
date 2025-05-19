@@ -1,15 +1,12 @@
 # Agda Web Docs Library
 
-A specialized library that enhances Agda-generated HTML documentation with navigation features, making formal specifications more accessible and user-friendly.
+A library for enhancing Agda HTML documentation with modern web features, including:
 
-## Overview
-
-Agda Web Docs Library transforms standard Agda HTML documentation by adding:
-
-- **Module Navigation**: A customizable sidebar that displays all available modules with optional filtering
-- **Themed Header**: A consistent header with optional back button for improved navigation
-- **Preserved Interactivity**: Maintains all native Agda documentation features including type links and interactive elements
-- **Simple Integration**: Works as both a CLI tool and a programmatic library
+- A clean, responsive layout with sidebar navigation
+- Dark/light theme toggle
+- Line numbers and line highlighting
+- Cross-file reference resolution with position-to-line mapping
+- Code block copying
 
 ## Installation
 
@@ -17,84 +14,89 @@ Agda Web Docs Library transforms standard Agda HTML documentation by adding:
 npm install agda-web-docs-lib
 ```
 
-## Configuration
-
-The library accepts the following configuration options:
-
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `inputDir` | string | Yes | Directory containing the Agda-generated HTML files |
-| `backButtonUrl` | string | No | URL for the back button in the header (e.g., "/docs") |
-| `modules` | string[] | No | Array of module names to include in the sidebar. If not provided, all modules will be shown |
-| `githubUrl` | string | No | Optional GitHub URL for the project, adds a GitHub link to the header |
-
 ## Usage
 
-### CLI Usage
+### Configuration
 
-1. Create a configuration file (e.g., `agda-docs.config.json`):
+Create a configuration file named `agda-docs.config.json` in your project root:
 
 ```json
 {
-  "backButtonUrl": "/docs",
-  "modules": ["Leios", "Leios.Ledger"],
-  "githubUrl": "https://github.com/your-organization/your-project"
+  "backButtonUrl": "/",
+  "inputDir": "html/",
+  "modules": [
+    "Your.Module.Prefix"
+  ],
+  "githubUrl": "https://github.com/your-user/your-project"
 }
 ```
 
-2. Process your Agda HTML documentation:
+### CLI Usage
 
 ```bash
-npx agda-docs process /path/to/agda/html agda-docs.config.json
+# Process the HTML files using the default config file
+npx agda-docs process
+
+# Or specify a custom config file
+npx agda-docs process -c path/to/config.json
+
+# Customize input and output directories
+npx agda-docs process -i path/to/input -o path/to/output
+
+# Control number of parallel workers
+npx agda-docs process -p 4
 ```
 
 ### Programmatic Usage
 
 ```typescript
-import { AgdaDocsRenderer } from 'agda-web-docs-lib';
+import { AgdaDocsTransformer, AgdaDocsIndexer } from 'agda-web-docs-lib';
 
+// Config options
 const config = {
-  backButtonUrl: '/docs',
-  modules: ['Leios', 'Ledger'],
-  githubUrl: 'https://github.com/your-organization/your-project'
+  backButtonUrl: '/',
+  inputDir: 'html/',
+  modules: ['Your.Module'],
+  githubUrl: 'https://github.com/your-user/your-project'
 };
 
-const renderer = new AgdaDocsRenderer(config);
-renderer.processDirectory('/path/to/agda/html');
+// Build necessary indexes
+AgdaDocsIndexer.buildAllIndexes('path/to/html');
+
+// Process a single file
+const transformer = new AgdaDocsTransformer(config);
+const htmlContent = fs.readFileSync('path/to/file.html', 'utf-8');
+transformer.setContent(htmlContent, 'file.html');
+const processed = transformer.transform();
+
+fs.writeFileSync('path/to/output/file.html', processed);
 ```
 
-## Integration Example: Docusaurus
+## Features
 
-This library can be easily integrated with documentation frameworks like Docusaurus. Here's an example workflow:
+### Position-to-Line Mappings
 
-1. Add the build script to your `package.json`:
+Agda HTML documentation uses numeric position references (e.g., `#123`) in links, which are difficult to work with. This library converts these to line number references (e.g., `#L42`) for better readability and usability.
 
-```json
-{
-  "scripts": {
-    "build-agda-docs": "bash scripts/build-and-process-agda-docs.sh"
-  }
-}
-```
+To toggle between position references and line numbers, press `Alt+P` on any page.
 
-2. Create a build script that:
-   - Generates Agda HTML documentation (e.g., using Nix)
-   - Copies the generated HTML to your static directory
-   - Processes the HTML using this library
+### Indexing System
 
-3. Link to the processed HTML files from your documentation
+The library builds several indexes during processing:
 
-For a complete example, see our [build script](scripts/build-and-process-agda-docs.sh) that handles the integration between Nix-generated Agda docs and Docusaurus.
+1. **Position Mappings**: Maps Agda's numeric position references to actual line numbers
+2. **Type Definition Index** (Upcoming): Will support hovering over types to see their definitions
+3. **Search Index** (Upcoming): Will enable full-text search across all modules
 
-## Development
+## Configuration Options
 
-```bash
-# Install dependencies
-npm install
+| Option | Type | Description |
+|--------|------|-------------|
+| `backButtonUrl` | string | (Optional) URL for the back button in the header |
+| `inputDir` | string | Directory containing Agda-generated HTML files |
+| `modules` | string[] | (Optional) List of module prefixes to include in sidebar |
+| `githubUrl` | string | (Optional) Link to GitHub repository |
 
-# Build the library
-npm run build
+## License
 
-# Run tests
-npm test
-```
+MIT

@@ -1,0 +1,8 @@
+{
+  "backButtonUrl": "/",
+  "inputDir": "html/",
+  "modules": [
+    "Leios"
+  ],
+  "githubUrl": "https://github.com/input-output-hk/ouroboros-leios-formal-spec"
+} 
