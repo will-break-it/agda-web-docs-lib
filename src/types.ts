@@ -3,7 +3,7 @@ export interface AgdaDocsConfig {
    * Optional URL for the back button in the header
    */
   backButtonUrl?: string;
-  
+
   /**
    * Directory containing the Agda-generated HTML files
    */
@@ -25,4 +25,4 @@ export interface ModuleInfo {
   name: string;
   path: string;
   isProjectModule: boolean;
-} 
+}

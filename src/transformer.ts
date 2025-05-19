@@ -1,7 +1,7 @@
-import { JSDOM } from 'jsdom';
-import { AgdaDocsConfig, ModuleInfo } from './types';
-import * as fs from 'fs';
-import * as path from 'path';
+import { JSDOM } from "jsdom";
+import { AgdaDocsConfig, ModuleInfo } from "./types";
+import * as fs from "fs";
+import * as path from "path";
 
 export class AgdaDocsTransformer {
   private config: AgdaDocsConfig;
@@ -9,7 +9,7 @@ export class AgdaDocsTransformer {
 
   constructor(config: AgdaDocsConfig) {
     this.config = config;
-    this.dom = new JSDOM('');
+    this.dom = new JSDOM("");
   }
 
   /**
@@ -36,9 +36,9 @@ export class AgdaDocsTransformer {
   private addThemeInitScript(): void {
     const document = this.dom.window.document;
     const head = document.head;
-    
+
     // Create script to set theme immediately (prevents flash)
-    const themeScript = document.createElement('script');
+    const themeScript = document.createElement("script");
     themeScript.textContent = `
       (function() {
         // Check for theme preference in localStorage
@@ -48,7 +48,7 @@ export class AgdaDocsTransformer {
         }
       })();
     `;
-    
+
     // Add to head to be executed early
     head.insertBefore(themeScript, head.firstChild);
   }
@@ -59,21 +59,21 @@ export class AgdaDocsTransformer {
   private addStyles(): void {
     const document = this.dom.window.document;
     const head = document.head;
-    
+
     // Try to find the CSS file in different possible locations
     const possiblePaths = [
       // Production path (when installed as a package)
-      path.join(__dirname, 'styles', 'base.css'),
+      path.join(__dirname, "styles", "base.css"),
       // Development path
-      path.join(__dirname, '..', 'src', 'styles', 'base.css'),
+      path.join(__dirname, "..", "src", "styles", "base.css"),
       // Alternative development path
-      path.join(__dirname, '..', '..', 'src', 'styles', 'base.css')
+      path.join(__dirname, "..", "..", "src", "styles", "base.css"),
     ];
 
     let baseCss: string | null = null;
     for (const cssPath of possiblePaths) {
       try {
-        baseCss = fs.readFileSync(cssPath, 'utf-8');
+        baseCss = fs.readFileSync(cssPath, "utf-8");
         break;
       } catch (error) {
         continue;
@@ -81,11 +81,13 @@ export class AgdaDocsTransformer {
     }
 
     if (baseCss) {
-      const style = document.createElement('style');
+      const style = document.createElement("style");
       style.textContent = baseCss;
       head.appendChild(style);
     } else {
-      console.warn('Warning: Could not load base.css styles, using fallback styles');
+      console.warn(
+        "Warning: Could not load base.css styles, using fallback styles",
+      );
       // Add fallback inline styles if CSS file is not found
       const fallbackStyles = `
         :root {
@@ -102,7 +104,7 @@ export class AgdaDocsTransformer {
         .sidebar { position: fixed; left: 0; top: var(--header-height); bottom: 0; width: var(--sidebar-width); }
         .main-content { margin-left: var(--sidebar-width); padding: 24px; max-width: var(--content-max-width); }
       `;
-      const style = document.createElement('style');
+      const style = document.createElement("style");
       style.textContent = fallbackStyles;
       head.appendChild(style);
     }
@@ -114,50 +116,50 @@ export class AgdaDocsTransformer {
   private addHeader(): void {
     const document = this.dom.window.document;
     const body = document.body;
-    
+
     // Create header
-    const header = document.createElement('header');
+    const header = document.createElement("header");
 
     // Create left section
-    const headerLeft = document.createElement('div');
-    headerLeft.className = 'header-left';
+    const headerLeft = document.createElement("div");
+    headerLeft.className = "header-left";
 
     // Add back button if URL is provided
     if (this.config.backButtonUrl) {
-      const backButton = document.createElement('a');
+      const backButton = document.createElement("a");
       backButton.href = this.config.backButtonUrl;
-      backButton.textContent = '← Back';
-      backButton.className = 'back-button';
+      backButton.textContent = "← Back";
+      backButton.className = "back-button";
       headerLeft.appendChild(backButton);
     }
 
     // Create right section
-    const headerRight = document.createElement('div');
-    headerRight.className = 'header-right';
+    const headerRight = document.createElement("div");
+    headerRight.className = "header-right";
 
     // Add GitHub link if URL is provided
     if (this.config.githubUrl) {
-      const githubLink = document.createElement('a');
+      const githubLink = document.createElement("a");
       githubLink.href = this.config.githubUrl;
-      githubLink.className = 'github-link';
-      githubLink.target = '_blank';
-      githubLink.rel = 'noopener noreferrer';
-      githubLink.title = 'View on GitHub';
-      
+      githubLink.className = "github-link";
+      githubLink.target = "_blank";
+      githubLink.rel = "noopener noreferrer";
+      githubLink.title = "View on GitHub";
+
       // Add GitHub icon
       githubLink.innerHTML = `
         <svg viewBox="0 0 24 24" width="24" height="24" class="github-icon">
           <path fill="currentColor" d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
         </svg>
       `;
-      
+
       headerRight.appendChild(githubLink);
     }
 
     // Add theme toggle button
-    const themeToggle = document.createElement('button');
-    themeToggle.className = 'theme-toggle';
-    themeToggle.setAttribute('title', 'Toggle theme');
+    const themeToggle = document.createElement("button");
+    themeToggle.className = "theme-toggle";
+    themeToggle.setAttribute("title", "Toggle theme");
     themeToggle.innerHTML = `
       <span class="light-icon">
         <svg viewBox="0 0 24 24" width="24" height="24">
@@ -180,7 +182,7 @@ export class AgdaDocsTransformer {
     body.insertBefore(header, body.firstChild);
 
     // Add theme toggle script
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     script.textContent = `
       (function() {
         // Check if theme preference exists in localStorage
@@ -215,7 +217,7 @@ export class AgdaDocsTransformer {
       return true; // Include all modules if no filter is provided
     }
     // Check if the module name starts with any of the configured module prefixes
-    return this.config.modules.some(module => moduleName.startsWith(module));
+    return this.config.modules.some((module) => moduleName.startsWith(module));
   }
 
   /**
@@ -226,43 +228,43 @@ export class AgdaDocsTransformer {
     const body = document.body;
 
     // Create sidebar
-    const sidebar = document.createElement('aside');
-    sidebar.className = 'sidebar';
+    const sidebar = document.createElement("aside");
+    sidebar.className = "sidebar";
 
     // Add modules section header
-    const modulesHeader = document.createElement('h3');
-    modulesHeader.textContent = 'Modules';
-    modulesHeader.className = 'modules-header';
+    const modulesHeader = document.createElement("h3");
+    modulesHeader.textContent = "Modules";
+    modulesHeader.className = "modules-header";
     sidebar.appendChild(modulesHeader);
 
     // Get all module links from the input directory
     const inputDir = this.config.inputDir;
     if (!inputDir) {
-      console.warn('Warning: No input directory specified in config');
+      console.warn("Warning: No input directory specified in config");
       return;
     }
 
     try {
       // Read all HTML files from the input directory
-      const files = fs.readdirSync(inputDir).filter(f => f.endsWith('.html'));
-      const modules: ModuleInfo[] = files.map(file => {
-        const moduleName = file.replace('.html', '');
+      const files = fs.readdirSync(inputDir).filter((f) => f.endsWith(".html"));
+      const modules: ModuleInfo[] = files.map((file) => {
+        const moduleName = file.replace(".html", "");
         return {
           name: moduleName,
           path: file,
-          isProjectModule: this.shouldIncludeModule(moduleName)
+          isProjectModule: this.shouldIncludeModule(moduleName),
         };
       });
 
       // Filter and sort modules
       const filteredModules = modules
-        .filter(m => m.isProjectModule)
+        .filter((m) => m.isProjectModule)
         .sort((a, b) => a.name.localeCompare(b.name));
 
       // Group modules by their top-level namespace
       const groupedModules = new Map<string, ModuleInfo[]>();
-      filteredModules.forEach(module => {
-        const parts = module.name.split('.');
+      filteredModules.forEach((module) => {
+        const parts = module.name.split(".");
         const group = parts[0];
         if (!groupedModules.has(group)) {
           groupedModules.set(group, []);
@@ -272,54 +274,57 @@ export class AgdaDocsTransformer {
 
       // Add each group of modules
       groupedModules.forEach((groupModules, groupName) => {
-        const groupHeader = document.createElement('h4');
+        const groupHeader = document.createElement("h4");
         groupHeader.textContent = groupName;
-        groupHeader.className = 'module-group-header';
+        groupHeader.className = "module-group-header";
         sidebar.appendChild(groupHeader);
 
-        const groupList = document.createElement('ul');
-        groupList.className = 'module-list';
-        
-        groupModules.forEach(module => {
-          const li = document.createElement('li');
-          li.className = 'module-item';
-          
-          const a = document.createElement('a');
+        const groupList = document.createElement("ul");
+        groupList.className = "module-list";
+
+        groupModules.forEach((module) => {
+          const li = document.createElement("li");
+          li.className = "module-item";
+
+          const a = document.createElement("a");
           a.href = module.path;
           // Show only the part after the group name
-          const displayName = module.name.split('.').slice(1).join('.');
+          const displayName = module.name.split(".").slice(1).join(".");
           a.textContent = displayName || module.name; // Fallback to full name if no dots
-          a.className = 'module-link';
-          
+          a.className = "module-link";
+
           // Add active class if this is the current page
           const currentPath = document.location.pathname;
-          if (module.path === currentPath || module.path === currentPath.split('/').pop()) {
-            a.classList.add('active');
+          if (
+            module.path === currentPath ||
+            module.path === currentPath.split("/").pop()
+          ) {
+            a.classList.add("active");
           }
-          
+
           li.appendChild(a);
           groupList.appendChild(li);
         });
         sidebar.appendChild(groupList);
       });
     } catch (error) {
-      console.error('Error reading input directory:', error);
+      console.error("Error reading input directory:", error);
     }
 
     // Create main wrapper
-    const mainWrapper = document.createElement('div');
-    mainWrapper.className = 'main-wrapper';
+    const mainWrapper = document.createElement("div");
+    mainWrapper.className = "main-wrapper";
 
     // Create main content wrapper
-    const mainContent = document.createElement('div');
-    mainContent.className = 'main-content';
+    const mainContent = document.createElement("div");
+    mainContent.className = "main-content";
 
     // Move all content except header into the wrapper
-    const header = document.querySelector('header');
-    const content = Array.from(body.childNodes).filter(node => 
-      node !== header
+    const header = document.querySelector("header");
+    const content = Array.from(body.childNodes).filter(
+      (node) => node !== header,
     );
-    content.forEach(node => mainContent.appendChild(node));
+    content.forEach((node) => mainContent.appendChild(node));
 
     // Add sidebar and main content to the wrapper
     mainWrapper.appendChild(sidebar);
@@ -332,4 +337,4 @@ export class AgdaDocsTransformer {
       body.appendChild(mainWrapper);
     }
   }
-} 
+}
