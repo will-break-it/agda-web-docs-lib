@@ -1,12 +1,20 @@
 name: Publish to npm
 
 on:
+  # Trigger on version tags
+  push:
+    tags:
+      - 'v*'
+  
+  # Also trigger on release creation
   release:
     types: [created]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Don't run twice on releases (which also create tags)
+    if: github.event_name != 'release' || github.event.action == 'created'
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -17,4 +25,13 @@ jobs:
       - run: npm run prepublish
       - run: npm publish
         env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}} 
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+      
+      # Create GitHub Release automatically if triggered by a tag
+      - name: Create Release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
