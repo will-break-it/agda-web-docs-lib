@@ -27,7 +27,201 @@ export class AgdaDocsTransformer {
     this.addStyles();
     this.addHeader();
     this.addSidebar();
+    this.addLineNumbersToCodeBlocks();
     return this.dom.serialize();
+  }
+
+  /**
+   * Adds line numbers to Agda code blocks
+   */
+  private addLineNumbersToCodeBlocks(): void {
+    const document = this.dom.window.document;
+    const codeBlocks = document.querySelectorAll('pre.Agda');
+
+    codeBlocks.forEach((codeBlock) => {
+      // Create a container for the line numbers and code
+      const container = document.createElement('div');
+      container.className = 'code-container';
+
+      // Create line numbers div
+      const lineNumbers = document.createElement('div');
+      lineNumbers.className = 'line-numbers';
+
+      // Get the original HTML content
+      const originalContent = codeBlock.innerHTML;
+      
+      // Split by lines for processing
+      // Ensure we handle empty lines properly
+      const lines = originalContent.split('\n');
+      
+      // Create modified content with line IDs for anchors
+      const lineNumbersHTML: string[] = [];
+      const linesHTML: string[] = [];
+
+      // Process non-empty lines only (skip the last empty line if it exists)
+      const actualLines = lines.filter((line, index) => !(index === lines.length - 1 && line.trim() === ''));
+
+      actualLines.forEach((line, index) => {
+        const lineNum = index + 1;
+        
+        // Create line number element with anchor
+        lineNumbersHTML.push(
+          `<a href="#L${lineNum}" id="L${lineNum}" class="line-number" data-line-number="${lineNum}">${lineNum}</a>`
+        );
+
+        // Add the line to the content with an ID that can be linked to
+        // Ensure even empty lines have proper height by using a non-breaking space
+        const lineContent = line.trim() === '' ? '&nbsp;' : line;
+        linesHTML.push(`<div id="LC${lineNum}" class="code-line">${lineContent}</div>`);
+      });
+
+      // Create the line numbers container 
+      lineNumbers.innerHTML = lineNumbersHTML.join('');
+
+      // Create the code content container
+      const codeContent = document.createElement('div');
+      codeContent.className = 'code-content';
+      codeContent.innerHTML = linesHTML.join('');
+
+      // Create copy button with improved design
+      const copyButton = document.createElement('button');
+      copyButton.className = 'copy-code-button';
+      copyButton.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 16 16">
+          <path fill="currentColor" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path fill="currentColor" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+        </svg>
+      `;
+      copyButton.title = "Copy code";
+      codeBlock.classList.add('has-copy-button');
+      
+      // Replace the original pre with our new structure
+      container.appendChild(lineNumbers);
+      container.appendChild(codeContent);
+      
+      // Replace the content of the pre tag
+      codeBlock.innerHTML = '';
+      codeBlock.appendChild(container);
+      codeBlock.appendChild(copyButton);
+    });
+
+    // Add script to handle copy functionality and line highlighting
+    const script = document.createElement('script');
+    script.textContent = `
+      (function() {
+        // Function to copy code without line numbers
+        function copyCode(event) {
+          const button = event.currentTarget;
+          const pre = button.closest('pre.Agda');
+          if (!pre) return;
+          
+          const codeContent = pre.querySelector('.code-content');
+          if (!codeContent) return;
+          
+          // Extract text content from code lines, preserving structure
+          const codeLines = Array.from(codeContent.querySelectorAll('.code-line'));
+          const codeText = codeLines.map(line => line.textContent).join('\\n');
+          
+          // Create temporary textarea to copy from
+          const textarea = document.createElement('textarea');
+          textarea.value = codeText;
+          textarea.style.position = 'absolute';
+          textarea.style.left = '-9999px';
+          document.body.appendChild(textarea);
+          textarea.select();
+          
+          try {
+            document.execCommand('copy');
+            // Show success state
+            button.classList.add('copy-success');
+            setTimeout(() => {
+              button.classList.remove('copy-success');
+            }, 2000);
+          } catch (err) {
+            console.error('Failed to copy code: ', err);
+          }
+          
+          document.body.removeChild(textarea);
+        }
+        
+        // Add click event listeners to all copy buttons
+        const copyButtons = document.querySelectorAll('.copy-code-button');
+        copyButtons.forEach(button => {
+          button.addEventListener('click', copyCode);
+        });
+        
+        // Handle highlighting of lines when line numbers are clicked
+        function setupLineHighlighting() {
+          const lineNumbers = document.querySelectorAll('.line-number');
+          
+          lineNumbers.forEach(lineNum => {
+            lineNum.addEventListener('click', function(e) {
+              e.preventDefault(); // Prevent default hash navigation
+              
+              // Remove highlight from all lines first
+              document.querySelectorAll('.code-line.highlighted').forEach(line => {
+                line.classList.remove('highlighted');
+              });
+              
+              // Get the line number
+              const num = this.getAttribute('data-line-number');
+              if (!num) return;
+              
+              // Find the corresponding code line and highlight it
+              const lineId = 'LC' + num;
+              const codeLine = document.getElementById(lineId);
+              if (codeLine) {
+                codeLine.classList.add('highlighted');
+                
+                // Update URL hash without causing a jump
+                const newUrl = window.location.pathname + window.location.search + '#L' + num;
+                history.pushState(null, '', newUrl);
+                
+                // Scroll the element into view
+                codeLine.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'center'
+                });
+              }
+            });
+          });
+        }
+        
+        // Handle highlighting of lines when URL has fragment
+        function highlightTargetLine() {
+          // Clear any existing highlights first
+          document.querySelectorAll('.code-line.highlighted').forEach(line => {
+            line.classList.remove('highlighted');
+          });
+          
+          const hash = window.location.hash;
+          if (hash && hash.startsWith('#L')) {
+            // Extract the line number from the hash
+            const lineNum = hash.substring(2);
+            const lineId = 'LC' + lineNum;
+            const codeLine = document.getElementById(lineId);
+            
+            if (codeLine) {
+              // Highlight the target line
+              codeLine.classList.add('highlighted');
+              
+              // Scroll the line into view
+              setTimeout(() => {
+                codeLine.scrollIntoView({
+                  behavior: 'smooth', 
+                  block: 'center'
+                });
+              }, 100); // Small delay to ensure DOM is ready
+            }
+          }
+        }
+        
+        // Run on page load and when hash changes
+        setupLineHighlighting();
+        highlightTargetLine();
+        window.addEventListener('hashchange', highlightTargetLine);
+      })();
+    `;
+    document.body.appendChild(script);
   }
 
   /**
