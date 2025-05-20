@@ -1,9 +1,8 @@
+import * as fs from 'fs';
 import { JSDOM } from 'jsdom';
-import { AgdaDocsConfig, ModuleInfo } from './types';
 import { AgdaDocsIndexer } from './indexer';
 import { AgdaDocsSearcher } from './search';
-import * as fs from 'fs';
-import * as path from 'path';
+import { AgdaDocsConfig, ModuleInfo } from './types';
 
 export class AgdaDocsTransformer {
   private config: AgdaDocsConfig;
@@ -153,61 +152,6 @@ export class AgdaDocsTransformer {
         console.warn(`    HTML: ${link.element.outerHTML}`);
       });
     }
-
-    // Add support script for toggling between position and line references
-    this.addPositionToggleScript();
-  }
-
-  /**
-   * Adds a script that allows toggling between position references and line numbers
-   */
-  private addPositionToggleScript(): void {
-    const document = this.dom.window.document;
-    const script = document.createElement('script');
-
-    script.textContent = `
-      (function() {
-        // Support for toggling between position and line references
-        document.addEventListener('keydown', function(event) {
-          // Alt+P toggles position mode
-          if (event.altKey && event.key === 'p') {
-            const links = document.querySelectorAll('a[data-original-href]');
-            links.forEach(link => {
-              const currentHref = link.getAttribute('href');
-              const originalHref = link.getAttribute('data-original-href');
-              
-              // Toggle between original position references and line numbers
-              link.setAttribute('data-original-href', currentHref);
-              link.setAttribute('href', originalHref);
-            });
-            
-            // Show notification
-            const notification = document.createElement('div');
-            notification.style.position = 'fixed';
-            notification.style.bottom = '20px';
-            notification.style.right = '20px';
-            notification.style.padding = '10px 20px';
-            notification.style.background = 'rgba(0,0,0,0.8)';
-            notification.style.color = 'white';
-            notification.style.borderRadius = '4px';
-            notification.style.zIndex = '9999';
-            notification.style.transition = 'opacity 0.5s';
-            notification.textContent = 'Reference mode toggled';
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-              notification.style.opacity = '0';
-              setTimeout(() => {
-                document.body.removeChild(notification);
-              }, 500);
-            }, 2000);
-          }
-        });
-      })();
-    `;
-
-    document.body.appendChild(script);
   }
 
   /**
@@ -293,138 +237,10 @@ export class AgdaDocsTransformer {
       codeBlock.appendChild(copyButton);
     });
 
-    // Add script to handle copy functionality and line highlighting
+    // Add script reference to handle copy functionality and line highlighting
     const script = document.createElement('script');
-    script.textContent = `
-      (function() {
-        // Function to copy code without line numbers
-        function copyCode(event) {
-          const button = event.currentTarget;
-          const pre = button.closest('pre.Agda');
-          if (!pre) return;
-          
-          const codeContent = pre.querySelector('.code-content');
-          if (!codeContent) return;
-          
-          // Extract text content from code lines, preserving structure
-          const codeLines = Array.from(codeContent.querySelectorAll('.code-line'));
-          const codeText = codeLines.map(line => line.textContent).join('\\n');
-          
-          // Create temporary textarea to copy from
-          const textarea = document.createElement('textarea');
-          textarea.value = codeText;
-          textarea.style.position = 'absolute';
-          textarea.style.left = '-9999px';
-          document.body.appendChild(textarea);
-          textarea.select();
-          
-          try {
-            document.execCommand('copy');
-            // Show success state
-            button.classList.add('copy-success');
-            setTimeout(() => {
-              button.classList.remove('copy-success');
-            }, 2000);
-          } catch (err) {
-            console.error('Failed to copy code: ', err);
-          }
-          
-          document.body.removeChild(textarea);
-        }
-        
-        // Add click event listeners to all copy buttons
-        const copyButtons = document.querySelectorAll('.copy-code-button');
-        copyButtons.forEach(button => {
-          button.addEventListener('click', copyCode);
-        });
-        
-        // Handle highlighting of lines when line numbers are clicked
-        function setupLineHighlighting() {
-          const lineNumbers = document.querySelectorAll('.line-number');
-          
-          lineNumbers.forEach(lineNum => {
-            lineNum.addEventListener('click', function(e) {
-              e.preventDefault(); // Prevent default hash navigation
-              
-              // Remove highlight from all lines and line numbers first
-              document.querySelectorAll('.code-line.highlighted').forEach(line => {
-                line.classList.remove('highlighted');
-              });
-              document.querySelectorAll('.line-number.highlighted').forEach(num => {
-                num.classList.remove('highlighted');
-              });
-              
-              // Get the line number
-              const num = this.getAttribute('data-line-number');
-              if (!num) return;
-              
-              // Add highlight class to clicked line number
-              this.classList.add('highlighted');
-              
-              // Find the corresponding code line and highlight it
-              const lineId = 'LC' + num;
-              const codeLine = document.getElementById(lineId);
-              if (codeLine) {
-                codeLine.classList.add('highlighted');
-                
-                // Update URL hash without causing a jump
-                const newUrl = window.location.pathname + window.location.search + '#L' + num;
-                history.pushState(null, '', newUrl);
-                
-                // Scroll the element into view
-                codeLine.scrollIntoView({
-                  behavior: 'smooth',
-                  block: 'center'
-                });
-              }
-            });
-          });
-        }
-        
-        // Handle highlighting of lines when URL has fragment
-        function highlightTargetLine() {
-          // Clear any existing highlights first
-          document.querySelectorAll('.code-line.highlighted').forEach(line => {
-            line.classList.remove('highlighted');
-          });
-          document.querySelectorAll('.line-number.highlighted').forEach(num => {
-            num.classList.remove('highlighted');
-          });
-          
-          const hash = window.location.hash;
-          if (hash && hash.startsWith('#L')) {
-            // Extract the line number from the hash
-            const lineNum = hash.substring(2);
-            const lineId = 'LC' + lineNum;
-            const codeLine = document.getElementById(lineId);
-            const lineNumEl = document.getElementById('L' + lineNum);
-            
-            if (codeLine) {
-              // Highlight the target line
-              codeLine.classList.add('highlighted');
-              
-              // Highlight the corresponding line number
-              if (lineNumEl) {
-                lineNumEl.classList.add('highlighted');
-              }
-              
-              // Scroll the line into view
-              setTimeout(() => {
-                codeLine.scrollIntoView({
-                  behavior: 'smooth', 
-                  block: 'center'
-                });
-              }, 100); // Small delay to ensure DOM is ready
-            }
-          }
-        }
-        
-        // Run on page load and when hash changes
-        setupLineHighlighting();
-        highlightTargetLine();
-        window.addEventListener('hashchange', highlightTargetLine);
-      })();
-    `;
+    script.src = 'codeBlocks.js';
+    script.defer = true;
     document.body.appendChild(script);
   }
 
@@ -435,17 +251,10 @@ export class AgdaDocsTransformer {
     const document = this.dom.window.document;
     const head = document.head;
 
-    // Create script to set theme immediately (prevents flash)
+    // Reference the external theme init script
     const themeScript = document.createElement('script');
-    themeScript.textContent = `
-      (function() {
-        // Check for theme preference in localStorage
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-          document.documentElement.classList.add('dark-theme');
-        }
-      })();
-    `;
+    themeScript.src = 'themeInit.js';
+    themeScript.defer = false;
 
     // Add to head to be executed early
     head.insertBefore(themeScript, head.firstChild);
@@ -458,83 +267,17 @@ export class AgdaDocsTransformer {
     const document = this.dom.window.document;
     const head = document.head;
 
-    // Try to find the CSS files in different possible locations
-    const possibleBasePaths = [
-      // Production path (when installed as a package)
-      path.join(__dirname, 'styles', 'base.css'),
-      // Development path
-      path.join(__dirname, '..', 'src', 'styles', 'base.css'),
-      // Alternative development path
-      path.join(__dirname, '..', '..', 'src', 'styles', 'base.css'),
-    ];
+    // Add base styles link
+    const baseStyleLink = document.createElement('link');
+    baseStyleLink.rel = 'stylesheet';
+    baseStyleLink.href = 'base.css';
+    head.appendChild(baseStyleLink);
 
-    const possibleSearchPaths = [
-      // Production path (when installed as a package)
-      path.join(__dirname, 'styles', 'search.css'),
-      // Development path
-      path.join(__dirname, '..', 'src', 'styles', 'search.css'),
-      // Alternative development path
-      path.join(__dirname, '..', '..', 'src', 'styles', 'search.css'),
-    ];
-
-    // Load base CSS
-    let baseCss: string | null = null;
-    for (const cssPath of possibleBasePaths) {
-      try {
-        baseCss = fs.readFileSync(cssPath, 'utf-8');
-        break;
-      } catch (error) {
-        continue;
-      }
-    }
-
-    // Load search CSS
-    let searchCss: string | null = null;
-    for (const cssPath of possibleSearchPaths) {
-      try {
-        searchCss = fs.readFileSync(cssPath, 'utf-8');
-        break;
-      } catch (error) {
-        continue;
-      }
-    }
-
-    // Add base styles
-    if (baseCss) {
-      const style = document.createElement('style');
-      style.textContent = baseCss;
-      head.appendChild(style);
-    } else {
-      console.warn('Warning: Could not load base.css styles, using fallback styles');
-      // Add fallback inline styles if CSS file is not found
-      const fallbackStyles = `
-        :root {
-          --header-height: 64px;
-          --sidebar-width: 280px;
-          --content-max-width: 900px;
-          --primary-color: #1a1a1a;
-          --border-color: #e0e0e0;
-          --hover-bg: #f5f5f5;
-          --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        body { margin: 0; padding-top: var(--header-height); }
-        header { position: fixed; top: 0; left: 0; right: 0; height: var(--header-height); background: #fff; }
-        .sidebar { position: fixed; left: 0; top: var(--header-height); bottom: 0; width: var(--sidebar-width); }
-        .main-content { margin-left: var(--sidebar-width); padding: 24px; max-width: var(--content-max-width); }
-      `;
-      const style = document.createElement('style');
-      style.textContent = fallbackStyles;
-      head.appendChild(style);
-    }
-
-    // Add search styles
-    if (searchCss) {
-      const searchStyle = document.createElement('style');
-      searchStyle.textContent = searchCss;
-      head.appendChild(searchStyle);
-    } else {
-      console.warn('Warning: Could not load search.css styles');
-    }
+    // Add search styles link
+    const searchStyleLink = document.createElement('link');
+    searchStyleLink.rel = 'stylesheet';
+    searchStyleLink.href = 'search.css';
+    head.appendChild(searchStyleLink);
   }
 
   /**
@@ -608,31 +351,10 @@ export class AgdaDocsTransformer {
     // Insert header at the beginning of body
     body.insertBefore(header, body.firstChild);
 
-    // Add theme toggle script
+    // Add theme toggle script reference
     const script = document.createElement('script');
-    script.textContent = `
-      (function() {
-        // Check if theme preference exists in localStorage
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-          document.documentElement.classList.add('dark-theme');
-        }
-
-        // Add toggle functionality
-        document.querySelector('.theme-toggle').addEventListener('click', function() {
-          const html = document.documentElement;
-          const isDark = html.classList.contains('dark-theme');
-          
-          if (isDark) {
-            html.classList.remove('dark-theme');
-            localStorage.setItem('theme', 'light');
-          } else {
-            html.classList.add('dark-theme');
-            localStorage.setItem('theme', 'dark');
-          }
-        });
-      })();
-    `;
+    script.src = 'themeToggle.js';
+    script.defer = true;
     document.body.appendChild(script);
   }
 

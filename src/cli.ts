@@ -48,7 +48,6 @@ function processFileBatch(
         const path = require('path');
         const { AgdaDocsTransformer } = require('./transformer');
         const { AgdaDocsIndexer } = require('./indexer');
-        const { AgdaDocsSearcher } = require('./search');
 
         // Process each file in the batch
         async function processBatch() {
@@ -161,6 +160,86 @@ function createProgressBar(width: number = 40): (current: number, total: number)
   };
 }
 
+/**
+ * Copies script and style assets to the output directory
+ */
+function copyAssets(outputDir: string): void {
+  // Find all script and style files
+  const possibleScriptDirs = [
+    // Production path (when installed as a package)
+    path.join(__dirname, 'scripts'),
+    // Development path
+    path.join(__dirname, '..', 'src', 'scripts'),
+    // Alternative development path
+    path.join(__dirname, '..', '..', 'src', 'scripts'),
+  ];
+
+  const possibleStyleDirs = [
+    // Production path (when installed as a package)
+    path.join(__dirname, 'styles'),
+    // Development path
+    path.join(__dirname, '..', 'src', 'styles'),
+    // Alternative development path
+    path.join(__dirname, '..', '..', 'src', 'styles'),
+  ];
+
+  // Find the first existing scripts directory
+  let scriptsDir: string | null = null;
+  for (const dir of possibleScriptDirs) {
+    if (fs.existsSync(dir)) {
+      scriptsDir = dir;
+      break;
+    }
+  }
+
+  // Find the first existing styles directory
+  let stylesDir: string | null = null;
+  for (const dir of possibleStyleDirs) {
+    if (fs.existsSync(dir)) {
+      stylesDir = dir;
+      break;
+    }
+  }
+
+  // Copy all JavaScript files from the scripts directory
+  if (scriptsDir) {
+    try {
+      const scriptFiles = fs.readdirSync(scriptsDir)
+        .filter(file => file.endsWith('.js'));
+      
+      for (const file of scriptFiles) {
+        const sourcePath = path.join(scriptsDir, file);
+        const destPath = path.join(outputDir, file);
+        fs.copyFileSync(sourcePath, destPath);
+        console.log(`Copied script: ${file}`);
+      }
+    } catch (error) {
+      console.warn(`Warning: Could not copy script files: ${error}`);
+    }
+  } else {
+    console.warn('Warning: Could not find scripts directory');
+  }
+
+  // Copy all CSS files from the styles directory
+  if (stylesDir) {
+    try {
+      const styleFiles = fs.readdirSync(stylesDir)
+        .filter(file => file.endsWith('.css'));
+      
+      for (const file of styleFiles) {
+        const sourcePath = path.join(stylesDir, file);
+        const destPath = path.join(outputDir, file);
+        fs.copyFileSync(sourcePath, destPath);
+        console.log(`Copied style: ${file}`);
+      }
+    } catch (error) {
+      console.warn(`Warning: Could not copy style files: ${error}`);
+    }
+  } else {
+    console.warn('Warning: Could not find styles directory');
+  }
+}
+
 program
   .name('agda-docs')
   .description('Process Agda-generated HTML documentation')
@@ -237,6 +316,10 @@ program
       // Write search index to output directory
       console.log('Writing search index to output directory...');
       AgdaDocsSearcher.writeSearchIndex(outputDir, searchIndex);
+
+      // Copy assets to output directory
+      console.log('Copying scripts and styles to output directory...');
+      copyAssets(outputDir);
 
       // Copy search script to output directory
       console.log('Copying search script to output directory...');
