@@ -101,11 +101,11 @@ export class AgdaDocsTransformer {
             // Preserve original with data attribute and change the href
             link.setAttribute('data-original-href', href);
             link.setAttribute('href', `#L${lineNumber}`);
-            
+
             // Set data attributes needed for hover preview
             link.setAttribute('data-hoverable', 'true');
             link.setAttribute('data-position', position);
-            
+
             // Add class for styling
             link.classList.add('type-hoverable');
 
@@ -131,11 +131,11 @@ export class AgdaDocsTransformer {
             // Preserve original with data attribute and change the href
             link.setAttribute('data-original-href', href);
             link.setAttribute('href', `${targetFile}#L${lineNumber}`);
-            
+
             // Set data attributes needed for hover preview
             link.setAttribute('data-hoverable', 'true');
             link.setAttribute('data-position', position);
-            
+
             // Add class for styling
             link.classList.add('type-hoverable');
 
@@ -508,14 +508,14 @@ export class AgdaDocsTransformer {
    */
   private addTypePreviewContainer(): void {
     const document = this.dom.window.document;
-    
+
     // Create the preview container that will be positioned and shown on hover
     const previewContainer = document.createElement('div');
     previewContainer.id = 'type-preview-container';
     previewContainer.className = 'type-preview-container';
     previewContainer.style.display = 'none';
     document.body.appendChild(previewContainer);
-    
+
     // Add script reference to handle hover preview functionality
     const script = document.createElement('script');
     script.src = 'typePreview.js';

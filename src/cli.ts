@@ -204,9 +204,8 @@ function copyAssets(outputDir: string): void {
   // Copy all JavaScript files from the scripts directory
   if (scriptsDir) {
     try {
-      const scriptFiles = fs.readdirSync(scriptsDir)
-        .filter(file => file.endsWith('.js'));
-      
+      const scriptFiles = fs.readdirSync(scriptsDir).filter((file) => file.endsWith('.js'));
+
       for (const file of scriptFiles) {
         const sourcePath = path.join(scriptsDir, file);
         const destPath = path.join(outputDir, file);
@@ -223,9 +222,8 @@ function copyAssets(outputDir: string): void {
   // Copy all CSS files from the styles directory
   if (stylesDir) {
     try {
-      const styleFiles = fs.readdirSync(stylesDir)
-        .filter(file => file.endsWith('.css'));
-      
+      const styleFiles = fs.readdirSync(stylesDir).filter((file) => file.endsWith('.css'));
+
       for (const file of styleFiles) {
         const sourcePath = path.join(stylesDir, file);
         const destPath = path.join(outputDir, file);
