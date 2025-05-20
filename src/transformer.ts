@@ -34,6 +34,7 @@ export class AgdaDocsTransformer {
     this.addSidebar();
     this.addLineNumbersToCodeBlocks();
     this.addSearchFunctionality();
+    this.addTypePreviewContainer();
 
     // Use the global mappings from the indexer for link transformation
     this.transformAgdaLinks();
@@ -100,6 +101,13 @@ export class AgdaDocsTransformer {
             // Preserve original with data attribute and change the href
             link.setAttribute('data-original-href', href);
             link.setAttribute('href', `#L${lineNumber}`);
+            
+            // Set data attributes needed for hover preview
+            link.setAttribute('data-hoverable', 'true');
+            link.setAttribute('data-position', position);
+            
+            // Add class for styling
+            link.classList.add('type-hoverable');
 
             // Add title tooltip to show both references
             link.setAttribute('title', `Line ${lineNumber} (position ${position})`);
@@ -123,6 +131,13 @@ export class AgdaDocsTransformer {
             // Preserve original with data attribute and change the href
             link.setAttribute('data-original-href', href);
             link.setAttribute('href', `${targetFile}#L${lineNumber}`);
+            
+            // Set data attributes needed for hover preview
+            link.setAttribute('data-hoverable', 'true');
+            link.setAttribute('data-position', position);
+            
+            // Add class for styling
+            link.classList.add('type-hoverable');
 
             // Add title tooltip to show both references
             link.setAttribute('title', `Line ${lineNumber} (position ${position})`);
@@ -278,6 +293,12 @@ export class AgdaDocsTransformer {
     searchStyleLink.rel = 'stylesheet';
     searchStyleLink.href = 'search.css';
     head.appendChild(searchStyleLink);
+
+    // Add type preview styles link
+    const typePreviewStyleLink = document.createElement('link');
+    typePreviewStyleLink.rel = 'stylesheet';
+    typePreviewStyleLink.href = 'typePreview.css';
+    head.appendChild(typePreviewStyleLink);
   }
 
   /**
@@ -480,5 +501,25 @@ export class AgdaDocsTransformer {
     } else {
       body.appendChild(mainWrapper);
     }
+  }
+
+  /**
+   * Adds the preview container and script for type hover functionality
+   */
+  private addTypePreviewContainer(): void {
+    const document = this.dom.window.document;
+    
+    // Create the preview container that will be positioned and shown on hover
+    const previewContainer = document.createElement('div');
+    previewContainer.id = 'type-preview-container';
+    previewContainer.className = 'type-preview-container';
+    previewContainer.style.display = 'none';
+    document.body.appendChild(previewContainer);
+    
+    // Add script reference to handle hover preview functionality
+    const script = document.createElement('script');
+    script.src = 'typePreview.js';
+    script.defer = true;
+    document.body.appendChild(script);
   }
 }
