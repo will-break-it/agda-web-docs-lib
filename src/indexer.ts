@@ -86,7 +86,11 @@ export class AgdaDocsIndexer {
     // Add line numbers to code blocks
     const codeBlocks = document.querySelectorAll('pre.Agda');
 
-    codeBlocks.forEach((codeBlock) => {
+    codeBlocks.forEach((codeBlock, blockIndex) => {
+      // Assign a unique ID to the code block
+      const blockId = `block-${blockIndex + 1}`;
+      codeBlock.id = blockId;
+
       // Create a container for the code content
       const codeContent = document.createElement('div');
       codeContent.className = 'code-content';
@@ -108,9 +112,9 @@ export class AgdaDocsIndexer {
       actualLines.forEach((line, index) => {
         const lineNum = index + 1;
 
-        // Add the line with an ID that can be linked to
+        // Add the line with a block-specific ID that can be linked to
         const lineContent = line.trim() === '' ? '&nbsp;' : line;
-        linesHTML.push(`<div id="LC${lineNum}" class="code-line">${lineContent}</div>`);
+        linesHTML.push(`<div id="${blockId}-LC${lineNum}" class="code-line">${lineContent}</div>`);
       });
 
       // Update code content
@@ -129,6 +133,9 @@ export class AgdaDocsIndexer {
     // Find the nearest code block ancestor
     const codeBlock = element.closest('pre.Agda');
     if (!codeBlock) return null;
+
+    // Get the block ID
+    const blockId = codeBlock.id || 'block-1';
 
     // Find the code container within the code block
     const codeContainer = codeBlock.querySelector('.code-content');
@@ -156,8 +163,8 @@ export class AgdaDocsIndexer {
       let sibling = parent.previousElementSibling;
       while (sibling) {
         const lineId = sibling.id;
-        if (lineId && lineId.startsWith('LC')) {
-          const lineNum = parseInt(lineId.substring(2));
+        if (lineId && lineId.startsWith(`${blockId}-LC`)) {
+          const lineNum = parseInt(lineId.substring(blockId.length + 3)); // +3 for "-LC"
           return lineNum;
         }
         sibling = sibling.previousElementSibling;

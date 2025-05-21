@@ -98,13 +98,20 @@ export class AgdaDocsTransformer {
           if (currentFileMappings[position]) {
             const lineNumber = currentFileMappings[position];
 
+            // Find the appropriate block that contains this position
+            // For multi-block files (e.g., Literate Agda), we need to determine which block
+            // contains the target line, rather than always targeting the first block
+            const targetCodeBlock = this.findCodeBlockContainingPosition(document, position);
+            const blockId = targetCodeBlock ? targetCodeBlock.id : 'B1'; // Default to first block if not found
+
             // Preserve original with data attribute and change the href
             link.setAttribute('data-original-href', href);
-            link.setAttribute('href', `#L${lineNumber}`);
+            link.setAttribute('href', `#${blockId}-L${lineNumber}`);
 
             // Set data attributes needed for hover preview
             link.setAttribute('data-hoverable', 'true');
             link.setAttribute('data-position', position);
+            link.setAttribute('data-block-id', blockId);
 
             // Add class for styling
             link.classList.add('type-hoverable');
@@ -126,12 +133,15 @@ export class AgdaDocsTransformer {
             const lineNumber = allMappings[targetFile][position];
 
             // Preserve original with data attribute and change the href
+            // For cross-file references we'll use the conventional first block (B1)
+            // since we can't determine which block contains the target position in another file
             link.setAttribute('data-original-href', href);
-            link.setAttribute('href', `${targetFile}#L${lineNumber}`);
+            link.setAttribute('href', `${targetFile}#B1-L${lineNumber}`);
 
             // Set data attributes needed for hover preview
             link.setAttribute('data-hoverable', 'true');
             link.setAttribute('data-position', position);
+            link.setAttribute('data-target-file', targetFile);
 
             // Add class for styling
             link.classList.add('type-hoverable');
@@ -164,6 +174,38 @@ export class AgdaDocsTransformer {
   }
 
   /**
+   * Attempts to find which code block contains the specified position
+   * For literate Agda files where there are multiple code blocks
+   */
+  private findCodeBlockContainingPosition(document: Document, position: string): Element | null {
+    // Get all code blocks
+    const codeBlocks = document.querySelectorAll('pre.Agda');
+    if (codeBlocks.length <= 1) {
+      // If there's only one block, it must be that one
+      return codeBlocks[0] || null;
+    }
+
+    // Try to find the exact position in any code block
+    for (const block of codeBlocks) {
+      const positionElement = block.querySelector(`[id="${position}"]`);
+      if (positionElement) {
+        return block;
+      }
+
+      // Check if any elements inside this block have data-position attribute
+      const elementsWithPosition = block.querySelectorAll(`[data-position="${position}"]`);
+      if (elementsWithPosition.length > 0) {
+        return block;
+      }
+    }
+
+    // If not found by exact position matching, we need to do more heuristics
+    // This is a complex problem that might require analyzing the content
+    // For now, we'll return the first block as a fallback
+    return codeBlocks[0];
+  }
+
+  /**
    * Determines if the given file path refers to the current file
    */
   private isCurrentFile(filePath: string): boolean {
@@ -178,7 +220,12 @@ export class AgdaDocsTransformer {
     const document = this.dom.window.document;
     const codeBlocks = document.querySelectorAll('pre.Agda');
 
-    codeBlocks.forEach((codeBlock) => {
+    // Generate a unique id for each code block to ensure line numbers are unique per block
+    codeBlocks.forEach((codeBlock, blockIndex) => {
+      // Assign a unique ID to the code block - using B prefix for brevity
+      const blockId = `B${blockIndex + 1}`;
+      codeBlock.id = blockId;
+
       // Create a container for the line numbers and code
       const container = document.createElement('div');
       container.className = 'code-container';
@@ -206,15 +253,18 @@ export class AgdaDocsTransformer {
       actualLines.forEach((line, index) => {
         const lineNum = index + 1;
 
-        // Create line number element with anchor
+        // Create unique IDs for each line by combining block ID and line number
+        const lineId = `${blockId}-L${lineNum}`;
+        const lineContentId = `${blockId}-LC${lineNum}`;
+
+        // Create line number element with anchor using the block-specific ID
         lineNumbersHTML.push(
-          `<a href="#L${lineNum}" id="L${lineNum}" class="line-number" data-line-number="${lineNum}">${lineNum}</a>`
+          `<a href="#${lineId}" id="${lineId}" class="line-number" data-line-number="${lineNum}" data-block-id="${blockId}">${lineNum}</a>`
         );
 
-        // Add the line to the content with an ID that can be linked to
-        // Ensure even empty lines have proper height by using a non-breaking space
+        // Add the line to the content with a block-specific ID
         const lineContent = line.trim() === '' ? '&nbsp;' : line;
-        linesHTML.push(`<div id="LC${lineNum}" class="code-line">${lineContent}</div>`);
+        linesHTML.push(`<div id="${lineContentId}" class="code-line">${lineContent}</div>`);
       });
 
       // Create the line numbers container
@@ -348,7 +398,7 @@ export class AgdaDocsTransformer {
     themeToggle.innerHTML = `
       <span class="light-icon">
         <svg viewBox="0 0 24 24" width="24" height="24">
-          <path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path>
+          <path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path>
         </svg>
       </span>
       <span class="dark-icon">

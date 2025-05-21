@@ -139,7 +139,7 @@
 .preview-line-numbers {
   background-color: var(--subtle-background);
   border-right: 1px solid var(--preview-border-color);
-  padding: 8px 6px;
+  padding: 8px 0;
   text-align: right;
   color: var(--text-muted);
   user-select: none;
@@ -160,12 +160,12 @@
   background-color: var(--preview-highlight-bg);
   color: var(--text-color);
   font-weight: bold;
-  border-radius: 3px;
+  border-radius: 3px 0 0 3px;
 }
 
 /* Code content */
 .preview-code-content {
-  padding: 8px;
+  padding: 8px 8px 8px 0;
   flex: 1;
   overflow-x: auto;
   display: flex;
@@ -179,6 +179,7 @@
   white-space: pre;
   letter-spacing: normal;
   box-sizing: border-box;
+  padding: 0 0 0 8px;
 }
 
 .preview-code-line > * {
@@ -189,25 +190,7 @@
 .preview-code-line.highlight {
   background-color: var(--preview-highlight-bg);
   font-weight: bold;
-  border-left: 2px solid var(--link-color, #0066cc);
-}
-
-/* Ensure perfect alignment of line numbers with code lines */
-.preview-line-numbers,
-.preview-code-content {
-  padding-top: 8px;
-  padding-bottom: 8px;
-}
-
-/* Fix for vertical alignment */
-.preview-line-numbers {
-  padding-left: 6px;
-  padding-right: 6px;
-}
-
-.preview-code-content {
-  padding-left: 8px;
-  padding-right: 8px;
+  border-radius: 0 3px 3px 0;
 }
 
 /* Animation */
