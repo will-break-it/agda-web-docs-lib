@@ -78,6 +78,74 @@
         hidePreview();
       }, HOVER_DELAY);
     }
+
+    /**
+     * Determines context lines for a target line by finding logical code blocks
+     * based on empty lines and documentation comments
+     */
+    function determineContextLines(allLines, targetIndex) {
+      if (targetIndex < 0 || targetIndex >= allLines.length) {
+        return { startIndex: targetIndex, endIndex: targetIndex };
+      }
+
+      // Function to check if a line is empty (after trimming whitespace)
+      const isEmptyLine = (line) => {
+        // Get the text content and trim it
+        const content = line.textContent || '';
+        return content.trim() === '';
+      };
+
+      // Function to check if a line is likely a comment
+      const isComment = (line) => {
+        // Get the text content
+        const content = line.textContent || '';
+        // Check for common comment indicators in Agda
+        return content.trim().startsWith('--') || content.trim().startsWith('{-');
+      };
+
+      // Find preceding context (go back until empty line)
+      let startIndex = targetIndex;
+      
+      // Check if the line immediately before the target is empty - if so, don't include anything before
+      if (targetIndex > 0 && isEmptyLine(allLines[targetIndex - 1])) {
+        // We found an empty line right before our target, so we want to start with the target line
+        startIndex = targetIndex;
+      } else {
+        // First check for preceding comments that might be documentation
+        let foundComment = false;
+        
+        // Look backward for comments immediately preceding the definition
+        for (let i = targetIndex - 1; i >= 0; i--) {
+          if (isEmptyLine(allLines[i])) {
+            // Stop at any empty line
+            break;
+          } else if (isComment(allLines[i])) {
+            foundComment = true;
+            startIndex = i;
+          } else if (foundComment) {
+            // If we were collecting comments but found code, stop
+            break;
+          } else {
+            // If we find code (not a comment), continue until empty line
+            startIndex = i;
+            if (i > 0 && isEmptyLine(allLines[i - 1])) {
+              break;
+            }
+          }
+        }
+      }
+
+      // Find subsequent context (go forward until empty line)
+      let endIndex = targetIndex;
+      for (let i = targetIndex + 1; i < allLines.length; i++) {
+        if (isEmptyLine(allLines[i])) {
+          break;
+        }
+        endIndex = i;
+      }
+
+      return { startIndex, endIndex };
+    }
     
     /**
      * Show the preview for the given link and target
@@ -110,14 +178,14 @@
           const codeContainer = targetLine.closest('.code-content');
           if (!codeContainer) return;
           
-          // Get context lines (2 before and after if available)
+          // Get all lines from the code container
           const allLines = Array.from(codeContainer.querySelectorAll('.code-line'));
           const targetIndex = allLines.indexOf(targetLine);
           
           if (targetIndex === -1) return;
           
-          const startIndex = Math.max(0, targetIndex - 2);
-          const endIndex = Math.min(allLines.length - 1, targetIndex + 2);
+          // Determine context-aware start and end indexes
+          const { startIndex, endIndex } = determineContextLines(allLines, targetIndex);
           
           // Create a new container with the context lines
           const contextLines = allLines.slice(startIndex, endIndex + 1);
@@ -210,6 +278,7 @@
       
       // Add each line with its number
       contextLines.forEach((line, index) => {
+        // The actual line number in the document (startLineIndex is 0-based, but lines are 1-based)
         const actualLineNumber = startLineIndex + index + 1;
         
         // Add line number
@@ -228,7 +297,7 @@
           codeLine.classList.add('highlight');
         }
         
-        // Clone the line content more carefully to preserve whitespace
+        // Clone the line content more carefully to preserve whitespace and syntax highlighting
         const lineContentWrapper = document.createElement('div');
         lineContentWrapper.style.whiteSpace = 'pre';
         lineContentWrapper.innerHTML = line.innerHTML;
@@ -239,7 +308,7 @@
       
       // Create preview code structure
       const previewCode = document.createElement('div');
-      previewCode.className = 'preview-code';
+      previewCode.className = 'preview-code Agda'; // Add Agda class for syntax highlighting
       previewCode.appendChild(lineNumbers);
       previewCode.appendChild(codeContent);
       
@@ -271,14 +340,14 @@
         const codeContainer = targetLine.closest('.code-content');
         if (!codeContainer) return null;
         
-        // Get context lines (2 before and after if available)
+        // Get all lines from the code container
         const allLines = Array.from(codeContainer.querySelectorAll('.code-line'));
         const targetIndex = allLines.indexOf(targetLine);
         
         if (targetIndex === -1) return null;
         
-        const startIndex = Math.max(0, targetIndex - 2);
-        const endIndex = Math.min(allLines.length - 1, targetIndex + 2);
+        // Determine context-aware start and end indexes
+        const { startIndex, endIndex } = determineContextLines(allLines, targetIndex);
         
         // Get the context lines
         const contextLines = allLines.slice(startIndex, endIndex + 1);

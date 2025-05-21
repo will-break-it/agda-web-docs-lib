@@ -108,9 +108,6 @@ export class AgdaDocsTransformer {
 
             // Add class for styling
             link.classList.add('type-hoverable');
-
-            // Add title tooltip to show both references
-            link.setAttribute('title', `Line ${lineNumber} (position ${position})`);
           } else {
             // Keep original link but track for warning
             unmappedLinks.push({
@@ -138,9 +135,6 @@ export class AgdaDocsTransformer {
 
             // Add class for styling
             link.classList.add('type-hoverable');
-
-            // Add title tooltip to show both references
-            link.setAttribute('title', `Line ${lineNumber} (position ${position})`);
           } else {
             // Keep original link but track for warning
             unmappedLinks.push({
