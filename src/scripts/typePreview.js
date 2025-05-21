@@ -116,10 +116,21 @@
     let idx = targetIndex;
     while (idx > 0) {
       idx--;
-      // If we find an empty line or a line that looks like it starts a declaration, stop
-      if (isEmptyLine(allLines[idx]) || isComment(allLines[idx])) {
+      
+      // If we find an empty line, check if we should stop including previous context
+      if (isEmptyLine(allLines[idx])) {
+        // If the empty line is directly before the definition, don't include any more previous lines
+        if (idx === targetIndex - 1) {
+          startIndex = idx + 1; // Start at the definition itself
+        }
         break;
       }
+      
+      // If we find a comment line, stop
+      if (isComment(allLines[idx])) {
+        break;
+      }
+      
       startIndex = idx;
     }
     
@@ -139,12 +150,20 @@
       }
       
       idx++;
-      endIndex = idx;
       
-      // If brackets are balanced and we find an empty line, we've likely reached the end
-      if (bracketCount <= 0 && (isEmptyLine(allLines[idx]) || isComment(allLines[idx]))) {
-        foundEndOfDeclaration = true;
+      // Check if the next line is empty and brackets are balanced
+      if (idx < allLines.length && bracketCount <= 0) {
+        if (isEmptyLine(allLines[idx]) || isComment(allLines[idx])) {
+          // Found the end, but don't include this empty line
+          foundEndOfDeclaration = true;
+          // Keep endIndex at the last non-empty line
+          endIndex = idx - 1;
+          break;
+        }
       }
+      
+      // If we reached here, include this line
+      endIndex = idx;
     }
     
     // Ensure we don't exceed array bounds
@@ -328,13 +347,20 @@
       codeContent.appendChild(codeLine);
     });
     
-    // Create preview code structure
+    // Create preview code structure - use the same exact class structure as in the main content
     const previewCode = document.createElement('div');
-    previewCode.className = 'preview-code Agda'; // Add Agda class for syntax highlighting
-    previewCode.appendChild(lineNumbers);
-    previewCode.appendChild(codeContent);
+    // Use the same class structure as the main Agda code blocks to inherit styles
+    previewCode.className = 'Agda'; 
     
+    // Create a code container to match the main content structure
+    const codeContainer = document.createElement('div');
+    codeContainer.className = 'code-container';
+    codeContainer.appendChild(lineNumbers);
+    codeContainer.appendChild(codeContent);
+    
+    previewCode.appendChild(codeContainer);
     container.appendChild(previewCode);
+    
     return container;
   }
   

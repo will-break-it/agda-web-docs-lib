@@ -58,139 +58,71 @@
   align-items: center;
 }
 
-/* Preview code */
-.preview-code {
+/* Override and adjust styles for preview context */
+.type-preview-container .Agda {
+  margin: 0;
+  padding: 8px;
+}
+
+.type-preview-container .code-container {
   display: flex;
-  align-items: stretch;
-  overflow: hidden;
-}
-
-/* Ensure the preview inherits Agda syntax highlighting from main page */
-.preview-code.Agda a {
-  text-decoration: none;
-  cursor: pointer;
-}
-
-/* Inherit main Agda syntax highlighting directly */
-.preview-code.Agda .Keyword { color: var(--syntax-keyword) !important; }
-.preview-code.Agda .String { color: var(--syntax-string) !important; }
-.preview-code.Agda .Comment { color: var(--syntax-comment) !important; }
-.preview-code.Agda .Function { color: var(--syntax-function) !important; }
-.preview-code.Agda .InductiveConstructor { color: var(--syntax-class) !important; }
-.preview-code.Agda .CoinductiveConstructor { color: var(--syntax-class) !important; }
-.preview-code.Agda .Datatype { color: var(--syntax-class) !important; }
-.preview-code.Agda .Field { color: var(--syntax-variable) !important; }
-.preview-code.Agda .Bound { color: var(--code-color) !important; }
-.preview-code.Agda .Generalizable { color: var(--syntax-variable) !important; }
-.preview-code.Agda .Module { color: var(--syntax-keyword) !important; }
-.preview-code.Agda .Number { color: var(--syntax-variable) !important; }
-.preview-code.Agda .Postulate { color: var(--syntax-function) !important; }
-.preview-code.Agda .Primitive { color: var(--syntax-keyword) !important; }
-.preview-code.Agda .Record { color: var(--syntax-class) !important; }
-.preview-code.Agda .Hole { color: var(--syntax-operator) !important; background-color: rgba(255, 255, 0, 0.1) !important; }
-.preview-code.Agda .Symbol { color: var(--syntax-operator) !important; }
-.preview-code.Agda .PrimitiveType { color: var(--syntax-keyword) !important; }
-.preview-code.Agda .Macro { color: var(--syntax-function) !important; }
-
-/* Apply dark theme styles when needed */
-:root.dark-theme .preview-code.Agda .Keyword, 
-:root.dark-theme .preview-code.Agda .Module,
-:root.dark-theme .preview-code.Agda .Pragma { 
-  color: var(--syntax-keyword) !important; 
-}
-
-:root.dark-theme .preview-code.Agda .Symbol,
-:root.dark-theme .preview-code.Agda .Operator { 
-  color: var(--syntax-operator) !important; 
-}
-
-:root.dark-theme .preview-code.Agda .InductiveConstructor,
-:root.dark-theme .preview-code.Agda .CoinductiveConstructor { 
-  color: var(--syntax-variable) !important; 
-}
-
-:root.dark-theme .preview-code.Agda .Datatype,
-:root.dark-theme .preview-code.Agda .Record,
-:root.dark-theme .preview-code.Agda .Primitive,
-:root.dark-theme .preview-code.Agda .PrimitiveType { 
-  color: var(--syntax-class) !important; 
-}
-
-:root.dark-theme .preview-code.Agda .String { 
-  color: var(--syntax-string) !important; 
-}
-
-:root.dark-theme .preview-code.Agda .Comment { 
-  color: var(--syntax-comment) !important; 
-}
-
-:root.dark-theme .preview-code.Agda .Function,
-:root.dark-theme .preview-code.Agda .Macro,
-:root.dark-theme .preview-code.Agda .Postulate { 
-  color: var(--syntax-function) !important; 
-}
-
-:root.dark-theme .preview-code.Agda .Bound,
-:root.dark-theme .preview-code.Agda .Generalizable { 
-  color: var(--code-color) !important; 
-}
-
-/* Line numbers in preview */
-.preview-line-numbers {
-  background-color: var(--subtle-background);
-  border-right: 1px solid var(--preview-border-color);
-  padding: 8px 0;
-  text-align: right;
-  color: var(--text-muted);
-  user-select: none;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-.preview-line-number {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 0 6px;
-  box-sizing: border-box;
-}
-
-.preview-line-number.highlight {
-  background-color: var(--preview-highlight-bg);
-  color: var(--text-color);
-  font-weight: bold;
-  border-radius: 3px 0 0 3px;
-}
-
-/* Code content */
-.preview-code-content {
-  padding: 8px 8px 8px 0;
-  flex: 1;
-  overflow-x: auto;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-.preview-code-line {
-  display: flex;
-  align-items: center;
-  white-space: pre;
-  letter-spacing: normal;
-  box-sizing: border-box;
-  padding: 0 0 0 8px;
-}
-
-.preview-code-line > * {
-  white-space: pre;
   width: 100%;
 }
 
-.preview-code-line.highlight {
-  background-color: var(--preview-highlight-bg);
-  font-weight: bold;
-  border-radius: 0 3px 3px 0;
+/* Line numbers in preview (adapting from original to match main style) */
+.type-preview-container .preview-line-numbers {
+  flex: 0 0 auto;
+  user-select: none;
+  text-align: right;
+  background-color: transparent;
+  border-right: 1px solid var(--preview-border-color);
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.type-preview-container .preview-line-number {
+  display: block;
+  color: rgba(27, 31, 35, 0.4);
+  padding: 0 6px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  height: 1.5em;
+}
+
+.type-preview-container .preview-line-number.highlight {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+:root.dark-theme .type-preview-container .preview-line-number {
+  color: rgba(230, 237, 243, 0.4);
+}
+
+/* Code content */
+.type-preview-container .preview-code-content {
+  flex: 1;
+  overflow-x: auto;
+  padding-left: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.type-preview-container .preview-code-line {
+  line-height: 1.5;
+  height: 1.5em;
+  white-space: pre;
+  position: relative;
+  margin: 0;
+}
+
+.type-preview-container .preview-code-line > * {
+  white-space: pre;
+}
+
+.type-preview-container .preview-code-line.highlight {
+  background-color: var(--hover-bg);
 }
 
 /* Animation */
