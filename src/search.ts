@@ -1,6 +1,6 @@
 import * as fs from 'fs';
-import * as path from 'path';
 import { JSDOM } from 'jsdom';
+import * as path from 'path';
 import { PositionMappings } from './types';
 
 /**
@@ -213,10 +213,73 @@ export class AgdaDocsSearcher {
   public static writeSearchIndex(outputDir: string, index: SearchIndex): void {
     try {
       const outputPath = path.join(outputDir, 'search-index.json');
-      fs.writeFileSync(outputPath, JSON.stringify(index));
+
+      // Check if the index is too large by attempting to stringify it
+      let jsonString: string;
+      try {
+        jsonString = JSON.stringify(index);
+      } catch (error) {
+        if (error instanceof RangeError && error.message.includes('Invalid string length')) {
+          this.writeChunkedSearchIndex(outputDir, index);
+          return;
+        }
+        throw error;
+      }
+
+      fs.writeFileSync(outputPath, jsonString);
       console.log(`Search index written to ${outputPath}`);
     } catch (error) {
       console.error('Error writing search index:', error);
+      throw error; // Re-throw to ensure the process fails properly
+    }
+  }
+
+  /**
+   * Writes a large search index in chunks to handle size limitations
+   */
+  private static writeChunkedSearchIndex(outputDir: string, index: SearchIndex): void {
+    try {
+      const files = Object.keys(index);
+      const chunkSize = Math.max(1, Math.floor(files.length / 10)); // Split into ~10 chunks
+      const chunks: { [key: string]: SearchIndex } = {};
+
+      // Split index into smaller chunks
+      for (let i = 0; i < files.length; i += chunkSize) {
+        const chunkFiles = files.slice(i, i + chunkSize);
+        const chunkIndex: SearchIndex = {};
+
+        for (const file of chunkFiles) {
+          chunkIndex[file] = index[file];
+        }
+
+        const chunkName = `chunk-${Math.floor(i / chunkSize)}`;
+        chunks[chunkName] = chunkIndex;
+      }
+
+      // Write chunk metadata
+      const metadataPath = path.join(outputDir, 'search-index-metadata.json');
+      const metadata = {
+        version: '1.0',
+        chunked: true,
+        chunks: Object.keys(chunks),
+        totalFiles: files.length,
+        totalEntries: Object.values(index).reduce((sum, entries) => sum + entries.length, 0),
+      };
+
+      fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
+      console.log(`Search index metadata written to ${metadataPath}`);
+
+      // Write each chunk
+      for (const [chunkName, chunkIndex] of Object.entries(chunks)) {
+        const chunkPath = path.join(outputDir, `search-index-${chunkName}.json`);
+        fs.writeFileSync(chunkPath, JSON.stringify(chunkIndex));
+        console.log(`Search index chunk written to ${chunkPath}`);
+      }
+
+      console.log(`Search index successfully written in ${Object.keys(chunks).length} chunks`);
+    } catch (error) {
+      console.error('Error writing chunked search index:', error);
+      throw error;
     }
   }
 
