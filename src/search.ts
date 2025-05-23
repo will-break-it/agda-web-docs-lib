@@ -104,8 +104,7 @@ export class AgdaDocsSearcher {
       // Extract code blocks
       const codeBlocks = document.querySelectorAll('pre.Agda');
 
-      let totalCodeEntries = 0;
-      codeBlocks.forEach((block, blockIndex) => {
+      codeBlocks.forEach((block) => {
         const codeLines = block.querySelectorAll('.code-line');
         const allLines = Array.from(codeLines);
 
@@ -154,8 +153,6 @@ export class AgdaDocsSearcher {
             lineNumber,
             context: fullContext,
           });
-
-          totalCodeEntries++;
 
           // Also still get individual identifiers
           const identifiers = line.querySelectorAll('[id]');
