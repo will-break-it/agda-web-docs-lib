@@ -27,10 +27,10 @@ export class AgdaDocsIndexer {
    * @param inputDir Directory containing the HTML files
    * @param progressCallback Optional callback function for progress reporting
    */
-  public static buildPositionMappings(
+  public static async buildPositionMappings(
     inputDir: string,
     progressCallback?: (current: number, total: number) => void
-  ): void {
+  ): Promise<void> {
     AgdaDocsIndexer.globalPositionMappings = {};
     console.log('Building indexes for cross-file references...');
 
@@ -39,38 +39,62 @@ export class AgdaDocsIndexer {
       const files = fs.readdirSync(inputDir).filter((f) => f.endsWith('.html'));
       console.log(`Scanning ${files.length} files for position mappings...`);
 
+      // Process files in batches to avoid memory issues
+      const batchSize = 20; // Process 20 files at a time
       let processedCount = 0;
-      for (const file of files) {
-        const content = fs.readFileSync(path.join(inputDir, file), 'utf-8');
-        const tempDom = new JSDOM(content);
-        const document = tempDom.window.document;
 
-        // Build mappings for this file
-        const mappings: Record<string, number> = {};
+      for (let i = 0; i < files.length; i += batchSize) {
+        const batch = files.slice(i, i + batchSize);
+        
+        // Process each file in the batch
+        for (const file of batch) {
+          let tempDom: JSDOM | null = null;
+          try {
+            const content = fs.readFileSync(path.join(inputDir, file), 'utf-8');
+            tempDom = new JSDOM(content);
+            const document = tempDom.window.document;
 
-        // Add line numbers to code blocks first
-        AgdaDocsIndexer.addLineNumbersToElementsInDocument(document);
+            // Build mappings for this file
+            const mappings: Record<string, number> = {};
 
-        // Look for all elements with an id attribute that is numeric
-        const elementsWithNumericId = document.querySelectorAll('[id]');
-        elementsWithNumericId.forEach((element) => {
-          const id = element.getAttribute('id');
-          if (id && /^\d+$/.test(id)) {
-            // Find the line number for this element
-            const lineNumber = AgdaDocsIndexer.findLineNumberForElement(element);
-            if (lineNumber) {
-              mappings[id] = lineNumber;
+            // Add line numbers to code blocks first
+            AgdaDocsIndexer.addLineNumbersToElementsInDocument(document);
+
+            // Look for all elements with an id attribute that is numeric
+            const elementsWithNumericId = document.querySelectorAll('[id]');
+            elementsWithNumericId.forEach((element) => {
+              const id = element.getAttribute('id');
+              if (id && /^\d+$/.test(id)) {
+                // Find the line number for this element
+                const lineNumber = AgdaDocsIndexer.findLineNumberForElement(element);
+                if (lineNumber) {
+                  mappings[id] = lineNumber;
+                }
+              }
+            });
+
+            // Store mappings for this file
+            AgdaDocsIndexer.globalPositionMappings[file] = mappings;
+
+            // Update progress counter and callback
+            processedCount++;
+            if (progressCallback) {
+              progressCallback(processedCount, files.length);
+            }
+          } catch (error) {
+            console.error(`Error processing file ${file}:`, error);
+          } finally {
+            // Explicitly clean up JSDOM to free memory
+            if (tempDom) {
+              tempDom.window.close();
+              tempDom = null;
             }
           }
-        });
+        }
 
-        // Store mappings for this file
-        AgdaDocsIndexer.globalPositionMappings[file] = mappings;
-
-        // Update progress counter and callback
-        processedCount++;
-        if (progressCallback) {
-          progressCallback(processedCount, files.length);
+        // Add a small delay between batches to allow garbage collection
+        if (i + batchSize < files.length) {
+          await new Promise(resolve => setTimeout(resolve, 50));
         }
       }
     } catch (error) {

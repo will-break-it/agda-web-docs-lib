@@ -25,12 +25,11 @@ export interface SearchIndex {
  * Class responsible for building and providing search functionality
  */
 export class AgdaDocsSearcher {
-  private static searchIndex: SearchIndex = {};
 
   /**
    * Generates the search index for all files in the inputDir
    */
-  public static buildSearchIndex(mappings: PositionMappings, inputDir: string): SearchIndex {
+  public static async buildSearchIndex(mappings: PositionMappings, inputDir: string): Promise<SearchIndex> {
     console.log('Building search index...');
     const index: SearchIndex = {};
     let fileCount = 0;
@@ -40,16 +39,33 @@ export class AgdaDocsSearcher {
       // Read all HTML files from the input directory
       const files = fs.readdirSync(inputDir).filter((f) => f.endsWith('.html'));
 
-      files.forEach((file) => {
-        const filePath = path.join(inputDir, file);
-        const entries = this.extractSearchEntriesFromFile(filePath, mappings[file] || {});
+      // Process files in batches to avoid memory issues
+      const batchSize = 20; // Same batch size as position mapping
+      
+      for (let i = 0; i < files.length; i += batchSize) {
+        const batch = files.slice(i, i + batchSize);
+        
+        // Process each file in the batch
+        for (const file of batch) {
+          try {
+            const filePath = path.join(inputDir, file);
+            const entries = this.extractSearchEntriesFromFile(filePath, mappings[file] || {});
 
-        if (entries.length > 0) {
-          index[file] = entries;
-          fileCount++;
-          entryCount += entries.length;
+            if (entries.length > 0) {
+              index[file] = entries;
+              fileCount++;
+              entryCount += entries.length;
+            }
+          } catch (error) {
+            console.error(`Error extracting search entries from ${file}:`, error);
+          }
         }
-      });
+
+        // Add a small delay between batches to allow garbage collection
+        if (i + batchSize < files.length) {
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+      }
 
       console.log(`Search index built with ${entryCount} entries from ${fileCount} files.`);
       return index;
@@ -66,9 +82,11 @@ export class AgdaDocsSearcher {
     filePath: string,
     positionMappings: { [position: string]: number }
   ): SearchEntry[] {
+    let dom: JSDOM | null = null;
+    
     try {
       const content = fs.readFileSync(filePath, 'utf-8');
-      const dom = new JSDOM(content);
+      dom = new JSDOM(content);
       const document = dom.window.document;
       const entries: SearchEntry[] = [];
 
@@ -83,20 +101,32 @@ export class AgdaDocsSearcher {
 
       // Extract code blocks
       const codeBlocks = document.querySelectorAll('pre.Agda');
-      codeBlocks.forEach((block) => {
+      
+      let totalCodeEntries = 0;
+      codeBlocks.forEach((block, blockIndex) => {
         const codeLines = block.querySelectorAll('.code-line');
         const allLines = Array.from(codeLines);
 
         allLines.forEach((line, index) => {
           const lineId = line.id;
-          if (!lineId) return;
+          if (!lineId) {
+            return;
+          }
 
-          const lineNumber = parseInt(lineId.replace('LC', ''));
+          // Parse line number from ID format like "B1-LC15" (LC = Line Content)
+          const lineMatch = lineId.match(/B\d+-LC(\d+)/);
+          if (!lineMatch) {
+            return;
+          }
+          
+          const lineNumber = parseInt(lineMatch[1]);
           if (isNaN(lineNumber)) return;
 
           // Get the full line content
           const lineContent = line.textContent?.trim();
-          if (!lineContent) return;
+          if (!lineContent) {
+            return;
+          }
 
           // Get surrounding context (1 line before and 1 line after)
           let contextBefore = '';
@@ -122,6 +152,8 @@ export class AgdaDocsSearcher {
             lineNumber,
             context: fullContext,
           });
+
+          totalCodeEntries++;
 
           // Also still get individual identifiers
           const identifiers = line.querySelectorAll('[id]');
@@ -149,7 +181,7 @@ export class AgdaDocsSearcher {
           });
         });
       });
-
+      
       // Extract headers
       const headers = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
       headers.forEach((header) => {
@@ -167,6 +199,12 @@ export class AgdaDocsSearcher {
     } catch (error) {
       console.error(`Error extracting search entries from ${filePath}:`, error);
       return [];
+    } finally {
+      // Explicitly clean up JSDOM to free memory
+      if (dom) {
+        dom.window.close();
+        dom = null;
+      }
     }
   }
 

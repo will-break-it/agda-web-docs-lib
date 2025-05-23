@@ -156,21 +156,6 @@ export class AgdaDocsTransformer {
         }
       }
     });
-
-    // Log warnings for unmapped links if there are any
-    if (unmappedLinks.length > 0) {
-      const fileName = this.currentFile || 'current file';
-
-      console.warn(
-        `Warning: Could not map ${unmappedLinks.length} position references to line numbers in ${fileName}`
-      );
-      // Show all unmapped links for debugging
-      unmappedLinks.forEach((link) => {
-        console.warn(`  - Could not map: ${link.href}`);
-        console.warn(`    Text content: "${link.text}"`);
-        console.warn(`    HTML: ${link.element.outerHTML}`);
-      });
-    }
   }
 
   /**
