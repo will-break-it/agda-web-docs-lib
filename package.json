@@ -1,6 +1,6 @@
 {
   "name": "agda-web-docs-lib",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "Library for enhancing Agda-generated HTML documentation",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

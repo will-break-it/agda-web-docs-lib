@@ -25,11 +25,13 @@ export interface SearchIndex {
  * Class responsible for building and providing search functionality
  */
 export class AgdaDocsSearcher {
-
   /**
    * Generates the search index for all files in the inputDir
    */
-  public static async buildSearchIndex(mappings: PositionMappings, inputDir: string): Promise<SearchIndex> {
+  public static async buildSearchIndex(
+    mappings: PositionMappings,
+    inputDir: string
+  ): Promise<SearchIndex> {
     console.log('Building search index...');
     const index: SearchIndex = {};
     let fileCount = 0;
@@ -41,10 +43,10 @@ export class AgdaDocsSearcher {
 
       // Process files in batches to avoid memory issues
       const batchSize = 20; // Same batch size as position mapping
-      
+
       for (let i = 0; i < files.length; i += batchSize) {
         const batch = files.slice(i, i + batchSize);
-        
+
         // Process each file in the batch
         for (const file of batch) {
           try {
@@ -63,7 +65,7 @@ export class AgdaDocsSearcher {
 
         // Add a small delay between batches to allow garbage collection
         if (i + batchSize < files.length) {
-          await new Promise(resolve => setTimeout(resolve, 50));
+          await new Promise((resolve) => setTimeout(resolve, 50));
         }
       }
 
@@ -83,7 +85,7 @@ export class AgdaDocsSearcher {
     positionMappings: { [position: string]: number }
   ): SearchEntry[] {
     let dom: JSDOM | null = null;
-    
+
     try {
       const content = fs.readFileSync(filePath, 'utf-8');
       dom = new JSDOM(content);
@@ -101,7 +103,7 @@ export class AgdaDocsSearcher {
 
       // Extract code blocks
       const codeBlocks = document.querySelectorAll('pre.Agda');
-      
+
       let totalCodeEntries = 0;
       codeBlocks.forEach((block, blockIndex) => {
         const codeLines = block.querySelectorAll('.code-line');
@@ -118,7 +120,7 @@ export class AgdaDocsSearcher {
           if (!lineMatch) {
             return;
           }
-          
+
           const lineNumber = parseInt(lineMatch[1]);
           if (isNaN(lineNumber)) return;
 
@@ -181,7 +183,7 @@ export class AgdaDocsSearcher {
           });
         });
       });
-      
+
       // Extract headers
       const headers = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
       headers.forEach((header) => {

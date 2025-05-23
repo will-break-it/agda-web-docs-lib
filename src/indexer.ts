@@ -45,7 +45,7 @@ export class AgdaDocsIndexer {
 
       for (let i = 0; i < files.length; i += batchSize) {
         const batch = files.slice(i, i + batchSize);
-        
+
         // Process each file in the batch
         for (const file of batch) {
           let tempDom: JSDOM | null = null;
@@ -94,7 +94,7 @@ export class AgdaDocsIndexer {
 
         // Add a small delay between batches to allow garbage collection
         if (i + batchSize < files.length) {
-          await new Promise(resolve => setTimeout(resolve, 50));
+          await new Promise((resolve) => setTimeout(resolve, 50));
         }
       }
     } catch (error) {

@@ -162,18 +162,18 @@ async function processFilesInMemoryEfficientBatches(
 ): Promise<void> {
   let processedCount = 0;
   const batchSize = MEMORY_EFFICIENT_BATCH_SIZE;
-  
+
   // Process files in small sequential batches to minimize memory usage
   for (let i = 0; i < files.length; i += batchSize) {
     const batch = files.slice(i, i + batchSize);
-    
+
     try {
       const count = await processFileBatch(inputDir, outputDir, batch, config);
       processedCount += count;
       progressCallback(processedCount, files.length);
-      
+
       // Small delay to allow memory cleanup
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     } catch (error) {
       console.error(`Error processing batch starting at index ${i}:`, error);
       throw error;
@@ -346,14 +346,14 @@ program
 
       // Process files using memory-efficient batching
       console.log('Processing HTML files ...');
-      
+
       const processingProgressBar = createProgressBar();
-      
+
       await processFilesInMemoryEfficientBatches(
-        inputDir, 
-        outputDir, 
-        files, 
-        config, 
+        inputDir,
+        outputDir,
+        files,
+        config,
         processingProgressBar
       );
 
@@ -362,7 +362,7 @@ program
         AgdaDocsIndexer.getGlobalMappings(),
         outputDir
       );
-      
+
       AgdaDocsSearcher.writeSearchIndex(outputDir, searchIndex);
 
       // Copy search script to output directory
