@@ -236,24 +236,38 @@ export class AgdaDocsSearcher {
 
   /**
    * Writes a large search index in chunks to handle size limitations
+   * Now splits by entry count and recursively splits chunks that are too large.
    */
-  private static writeChunkedSearchIndex(outputDir: string, index: SearchIndex): void {
+  private static writeChunkedSearchIndex(
+    outputDir: string,
+    index: SearchIndex,
+    chunkPrefix = 'chunk'
+  ): void {
     try {
       const files = Object.keys(index);
-      const chunkSize = Math.max(1, Math.floor(files.length / 10)); // Split into ~10 chunks
+      const maxEntriesPerChunk = 1000; // Lower this if still too big
+      let chunkIndex = 0;
       const chunks: { [key: string]: SearchIndex } = {};
 
-      // Split index into smaller chunks
-      for (let i = 0; i < files.length; i += chunkSize) {
-        const chunkFiles = files.slice(i, i + chunkSize);
-        const chunkIndex: SearchIndex = {};
-
-        for (const file of chunkFiles) {
-          chunkIndex[file] = index[file];
+      for (let i = 0; i < files.length; ) {
+        let entriesCount = 0;
+        const chunkFiles: string[] = [];
+        while (i < files.length && entriesCount < maxEntriesPerChunk) {
+          const file = files[i];
+          const fileEntries = index[file];
+          if (entriesCount + fileEntries.length > maxEntriesPerChunk && chunkFiles.length > 0) {
+            break;
+          }
+          chunkFiles.push(file);
+          entriesCount += fileEntries.length;
+          i++;
         }
-
-        const chunkName = `chunk-${Math.floor(i / chunkSize)}`;
-        chunks[chunkName] = chunkIndex;
+        const chunk: SearchIndex = {};
+        for (const file of chunkFiles) {
+          chunk[file] = index[file];
+        }
+        chunks[`${chunkPrefix}-${chunkIndex}`] = chunk;
+        chunkIndex++;
       }
 
       // Write chunk metadata
@@ -265,14 +279,26 @@ export class AgdaDocsSearcher {
         totalFiles: files.length,
         totalEntries: Object.values(index).reduce((sum, entries) => sum + entries.length, 0),
       };
-
       fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
       console.log(`Search index metadata written to ${metadataPath}`);
 
-      // Write each chunk
-      for (const [chunkName, chunkIndex] of Object.entries(chunks)) {
+      // Write each chunk, with error handling for size
+      for (const [chunkName, chunkIndexObj] of Object.entries(chunks)) {
         const chunkPath = path.join(outputDir, `search-index-${chunkName}.json`);
-        fs.writeFileSync(chunkPath, JSON.stringify(chunkIndex));
+        let jsonString: string;
+        try {
+          jsonString = JSON.stringify(chunkIndexObj);
+        } catch (error) {
+          if (error instanceof RangeError && error.message.includes('Invalid string length')) {
+            // If still too big, split further
+            console.warn(`Chunk ${chunkName} too large, splitting further...`);
+            // Recursively split and write
+            this.writeChunkedSearchIndex(outputDir, chunkIndexObj, chunkName);
+            continue;
+          }
+          throw error;
+        }
+        fs.writeFileSync(chunkPath, jsonString);
         console.log(`Search index chunk written to ${chunkPath}`);
       }
 
