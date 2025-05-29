@@ -32,18 +32,6 @@ Transform your Agda HTML documentation with modern web features, responsive desi
 
 **Performance Tip:** Include `cache-dependency-path` to enable npm caching and speed up your workflows.
 
-### CLI
-
-```bash
-npm install agda-web-docs-lib
-
-# Process with default config
-npx agda-docs process
-
-# Custom configuration
-npx agda-docs process -c config.json -i input/ -o output/
-```
-
 ## 🖼️ Visual Examples
 
 ### Modern Layout & Navigation
