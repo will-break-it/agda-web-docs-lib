@@ -1,0 +1,5 @@
+{
+  "inputDir": "test/temp/input",
+  "backButtonUrl": "/home",
+  "modules": ["Project", "Agda", "Data"]
+} 

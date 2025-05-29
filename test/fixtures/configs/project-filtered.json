@@ -1,0 +1,6 @@
+{
+  "inputDir": "test/temp/input",
+  "backButtonUrl": "/docs",
+  "modules": ["Project", "Agda", "Data"],
+  "githubUrl": "https://github.com/test/agda-project"
+} 

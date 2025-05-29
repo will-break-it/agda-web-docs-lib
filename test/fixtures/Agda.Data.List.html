@@ -1,0 +1,50 @@
+<!DOCTYPE HTML
+    PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Agda.Data.List</title>
+    <link rel="stylesheet" href="Agda.css">
+</head>
+
+<body>
+    <h3>Agda.Data.List</h3>
+    <pre class="Agda">
+<a id="42" class="Symbol">{-#</a> <a id="46" class="Keyword">OPTIONS</a> <a id="54" class="Pragma">--safe</a> <a id="61" class="Symbol">#-}</a>
+
+<a id="66" class="Keyword">module</a> <a id="73" href="#73" class="Module">Agda.Data.List</a> <a id="88" class="Keyword">where</a>
+
+<a id="95" class="Keyword">open</a> <a id="100" class="Keyword">import</a> <a id="107" href="/formal-spec/Relation.Binary.PropositionalEquality.html" class="Module">Relation.Binary.PropositionalEquality</a>
+<a id="146" class="Keyword">open</a> <a id="151" class="Keyword">import</a> <a id="158" href="/formal-spec/Data.Nat.html" class="Module">Data.Nat</a> <a id="167" class="Symbol">using</a> <a id="173" class="Symbol">(</a><a id="174" href="/formal-spec/Data.Nat.html#423" class="Datatype">ℕ</a><a id="175" class="Symbol">;</a> <a id="177" href="/formal-spec/Data.Nat.html#1458" class="InductiveConstructor">zero</a><a id="181" class="Symbol">;</a> <a id="183" href="/formal-spec/Data.Nat.html#1469" class="InductiveConstructor">suc</a><a id="186" class="Symbol">;</a> <a id="188" href="/formal-spec/Data.Nat.html#2198" class="Function Operator">_+_</a><a id="191" class="Symbol">)</a>
+
+<a id="194" href="#194" class="Comment">-- | Lists over a given set A can be represented as the least set containing</a>
+<a id="271" href="#271" class="Comment">-- nil and closed under cons.</a>
+<a id="301" class="Keyword">data</a> <a id="306" href="#306" class="Datatype">List</a> <a id="311" class="Symbol">(</a><a id="312" href="#312" class="Bound">A</a> <a id="314" class="Symbol">:</a> <a id="316" class="PrimitiveType">Set</a><a id="319" class="Symbol">)</a> <a id="321" class="Symbol">:</a> <a id="323" class="PrimitiveType">Set</a> <a id="327" class="Keyword">where</a>
+  <a id="335" href="#335" class="InductiveConstructor">[]</a>  <a id="339" class="Symbol">:</a> <a id="341" href="#306" class="Datatype">List</a> <a id="346" href="#312" class="Bound">A</a>
+  <a id="350" href="#350" class="InductiveConstructor Operator">_∷_</a> <a id="354" class="Symbol">:</a> <a id="356" href="#312" class="Bound">A</a> <a id="358" class="Symbol">→</a> <a id="360" href="#306" class="Datatype">List</a> <a id="365" href="#312" class="Bound">A</a> <a id="367" class="Symbol">→</a> <a id="369" href="#306" class="Datatype">List</a> <a id="374" href="#312" class="Bound">A</a>
+
+<a id="377" class="Symbol">{-#</a> <a id="381" class="Keyword">BUILTIN</a> <a id="389" class="Keyword">LIST</a> <a id="394" href="#306" class="Datatype">List</a> <a id="399" class="Symbol">#-}</a>
+
+<a id="404" href="#404" class="Comment">-- | The length of a list.</a>
+<a id="432" href="#432" class="Function">length</a> <a id="439" class="Symbol">:</a> <a id="441" class="Symbol">∀</a> <a id="443" class="Symbol">{</a><a id="444" href="#444" class="Bound">A</a><a id="445" class="Symbol">}</a> <a id="447" class="Symbol">→</a> <a id="449" href="#306" class="Datatype">List</a> <a id="454" href="#444" class="Bound">A</a> <a id="456" class="Symbol">→</a> <a id="458" href="/formal-spec/Data.Nat.html#423" class="Datatype">ℕ</a>
+<a id="460" href="#432" class="Function">length</a> <a id="467" href="#335" class="InductiveConstructor">[]</a>       <a id="475" class="Symbol">=</a> <a id="477" href="/formal-spec/Data.Nat.html#1458" class="InductiveConstructor">zero</a>
+<a id="482" href="#432" class="Function">length</a> <a id="489" class="Symbol">(</a><a id="490" href="#490" class="Bound">x</a> <a id="492" href="#350" class="InductiveConstructor Operator">∷</a> <a id="494" href="#494" class="Bound">xs</a><a id="496" class="Symbol">)</a> <a id="498" class="Symbol">=</a> <a id="500" href="/formal-spec/Data.Nat.html#1469" class="InductiveConstructor">suc</a> <a id="504" class="Symbol">(</a><a id="505" href="#432" class="Function">length</a> <a id="512" href="#494" class="Bound">xs</a><a id="514" class="Symbol">)</a>
+</pre>
+
+    <h4>Concatenation</h4>
+    <pre class="Agda">
+<a id="588" href="#588" class="Comment">-- | Concatenate two lists.</a>
+<a id="617" href="#617" class="Function Operator">_++_</a> <a id="622" class="Symbol">:</a> <a id="624" class="Symbol">∀</a> <a id="626" class="Symbol">{</a><a id="627" href="#627" class="Bound">A</a><a id="628" class="Symbol">}</a> <a id="630" class="Symbol">→</a> <a id="632" href="#306" class="Datatype">List</a> <a id="637" href="#627" class="Bound">A</a> <a id="639" class="Symbol">→</a> <a id="641" href="#306" class="Datatype">List</a> <a id="646" href="#627" class="Bound">A</a> <a id="648" class="Symbol">→</a> <a id="650" href="#306" class="Datatype">List</a> <a id="655" href="#627" class="Bound">A</a>
+<a id="657" href="#335" class="InductiveConstructor">[]</a>       <a id="665" href="#617" class="Function Operator">++</a> <a id="668" href="#668" class="Bound">ys</a> <a id="671" class="Symbol">=</a> <a id="673" href="#668" class="Bound">ys</a>
+<a id="676" class="Symbol">(</a><a id="677" href="#677" class="Bound">x</a> <a id="679" href="#350" class="InductiveConstructor Operator">∷</a> <a id="681" href="#681" class="Bound">xs</a><a id="683" class="Symbol">)</a> <a id="685" href="#617" class="Function Operator">++</a> <a id="688" href="#688" class="Bound">ys</a> <a id="691" class="Symbol">=</a> <a id="693" href="#677" class="Bound">x</a> <a id="695" href="#350" class="InductiveConstructor Operator">∷</a> <a id="697" class="Symbol">(</a><a id="698" href="#681" class="Bound">xs</a> <a id="701" href="#617" class="Function Operator">++</a> <a id="704" href="#688" class="Bound">ys</a><a id="706" class="Symbol">)</a>
+
+<a id="709" href="#709" class="Comment">-- | Append is associative.</a>
+<a id="738" href="#738" class="Function">++-assoc</a> <a id="747" class="Symbol">:</a> <a id="749" class="Symbol">∀</a> <a id="751" class="Symbol">{</a><a id="752" href="#752" class="Bound">A</a><a id="753" class="Symbol">}</a> <a id="755" class="Symbol">(</a><a id="756" href="#756" class="Bound">xs</a> <a id="759" href="#759" class="Bound">ys</a> <a id="762" href="#762" class="Bound">zs</a> <a id="765" class="Symbol">:</a> <a id="767" href="#306" class="Datatype">List</a> <a id="772" href="#752" class="Bound">A</a><a id="773" class="Symbol">)</a> <a id="775" class="Symbol">→</a>
+            <a id="789" class="Symbol">(</a><a id="790" href="#756" class="Bound">xs</a> <a id="793" href="#617" class="Function Operator">++</a> <a id="796" href="#759" class="Bound">ys</a><a id="798" class="Symbol">)</a> <a id="800" href="#617" class="Function Operator">++</a> <a id="803" href="#762" class="Bound">zs</a> <a id="806" href="/formal-spec/Relation.Binary.PropositionalEquality.html#1272" class="Datatype Operator">≡</a> <a id="808" href="#756" class="Bound">xs</a> <a id="811" href="#617" class="Function Operator">++</a> <a id="814" class="Symbol">(</a><a id="815" href="#759" class="Bound">ys</a> <a id="818" href="#617" class="Function Operator">++</a> <a id="821" href="#762" class="Bound">zs</a><a id="823" class="Symbol">)</a>
+<a id="825" href="#738" class="Function">++-assoc</a> <a id="834" href="#335" class="InductiveConstructor">[]</a>       <a id="842" href="#842" class="Bound">ys</a> <a id="845" href="#845" class="Bound">zs</a> <a id="848" class="Symbol">=</a> <a id="850" href="/formal-spec/Relation.Binary.PropositionalEquality.html#2947" class="InductiveConstructor">refl</a>
+<a id="855" href="#738" class="Function">++-assoc</a> <a id="864" class="Symbol">(</a><a id="865" href="#865" class="Bound">x</a> <a id="867" href="#350" class="InductiveConstructor Operator">∷</a> <a id="869" href="#869" class="Bound">xs</a><a id="871" class="Symbol">)</a> <a id="873" href="#873" class="Bound">ys</a> <a id="876" href="#876" class="Bound">zs</a> <a id="879" class="Symbol">=</a> <a id="881" href="/formal-spec/Relation.Binary.PropositionalEquality.html#4076" class="Function">cong</a> <a id="886" class="Symbol">(</a><a id="887" href="#865" class="Bound">x</a> <a id="889" href="#350" class="InductiveConstructor Operator">∷_</a><a id="891" class="Symbol">)</a> <a id="893" class="Symbol">(</a><a id="894" href="#738" class="Function">++-assoc</a> <a id="903" href="#869" class="Bound">xs</a> <a id="906" href="#873" class="Bound">ys</a> <a id="909" href="#876" class="Bound">zs</a><a id="911" class="Symbol">)</a>
+</pre>
+</body>
+
+</html>

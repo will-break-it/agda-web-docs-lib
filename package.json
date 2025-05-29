@@ -22,11 +22,13 @@
   ],
   "scripts": {
     "build": "rm -rf dist && tsc && chmod +x ./dist/cli.js && cp -r src/styles dist/ && cp -r src/scripts dist/",
-    "test": "jest --passWithNoTests",
+    "test": "node --test test/",
+    "test:watch": "node --test --watch test/",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
-    "prepublish": "npm run lint && npm test && npm run build",
-    "version": "npm run format && git add -A src",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "preversion": "npm run lint && npm run format && npm test && npm run build",
+    "prepublishOnly": "npm test && npm run build",
     "postversion": "git push && git push --tags"
   },
   "keywords": [

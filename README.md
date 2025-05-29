@@ -1,5 +1,11 @@
 # Agda Web Docs Library
 
+[![CI](https://github.com/will-break-it/agda-web-docs-lib/actions/workflows/ci.yml/badge.svg)](https://github.com/will-break-it/agda-web-docs-lib/actions/workflows/ci.yml)
+[![npm version](https://badge.fury.io/js/agda-web-docs-lib.svg)](https://badge.fury.io/js/agda-web-docs-lib)
+[![npm downloads](https://img.shields.io/npm/dm/agda-web-docs-lib.svg)](https://www.npmjs.com/package/agda-web-docs-lib)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/node/v/agda-web-docs-lib.svg)](https://nodejs.org/)
+
 A library for enhancing Agda HTML documentation with modern web features.
 
 ## Features
