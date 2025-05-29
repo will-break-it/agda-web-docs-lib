@@ -3,17 +3,15 @@
 import { Command } from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Worker } from 'worker_threads';
 import { AgdaDocsIndexer } from './indexer';
 import { AgdaDocsSearcher } from './search';
+import { AgdaDocsTransformer } from './transformer';
+import { AgdaDocsConfig } from './types';
 
 const program = new Command();
 
 // Default config file names to look for
 const DEFAULT_CONFIG_FILES = ['agda-docs.config.json'];
-
-// Small batch sizes to reduce memory usage per worker
-const MEMORY_EFFICIENT_BATCH_SIZE = 10;
 
 function findConfigFile(): string | null {
   const currentDir = process.cwd();
@@ -26,156 +24,41 @@ function findConfigFile(): string | null {
   return null;
 }
 
-// Worker function to process a batch of files with memory optimization
-function processFileBatch(
+// Simple direct file processing without workers
+async function processFiles(
   inputDir: string,
   outputDir: string,
   files: string[],
-  config: Record<string, unknown>
-): Promise<number> {
-  return new Promise((resolve, reject) => {
-    // Create a worker script path
-    const workerScriptPath = path.resolve(__dirname, 'worker.js');
-
-    // Check if worker script exists, if not create it
-    if (!fs.existsSync(workerScriptPath)) {
-      fs.writeFileSync(
-        workerScriptPath,
-        `
-        const { parentPort, workerData } = require('worker_threads');
-        const fs = require('fs');
-        const path = require('path');
-        const { AgdaDocsTransformer } = require('./transformer');
-        const { AgdaDocsIndexer } = require('./indexer');
-
-        // Process each file in the batch with memory management
-        async function processBatch() {
-          const { inputDir, outputDir, files, config, globalMappings } = workerData;
-          let processedCount = 0;
-
-          // Set global mappings in the indexer class
-          AgdaDocsIndexer.setGlobalMappings(globalMappings);
-          
-          // Create transformer with config
-          const transformer = new AgdaDocsTransformer(config);
-          
-          for (const file of files) {
-            try {
-              const inputPath = path.join(inputDir, file);
-              const outputPath = path.join(outputDir, file);
-              const content = fs.readFileSync(inputPath, 'utf8');
-              
-              // Process the file
-              transformer.setContent(content, file);
-              const processed = transformer.transform();
-              
-              // Ensure output directory exists
-              const outputDirForFile = path.dirname(outputPath);
-              if (!fs.existsSync(outputDirForFile)) {
-                fs.mkdirSync(outputDirForFile, { recursive: true });
-              }
-              
-              fs.writeFileSync(outputPath, processed);
-              
-              // Report progress
-              processedCount++;
-              parentPort.postMessage({ type: 'progress', file });
-            } catch (error) {
-              parentPort.postMessage({ 
-                type: 'error', 
-                error: error.message || 'Unknown error',
-                file 
-              });
-            }
-          }
-          
-          return processedCount;
-        }
-        
-        // Start processing and report completion
-        processBatch()
-          .then(count => {
-            parentPort.postMessage({ type: 'complete', count });
-          })
-          .catch(error => {
-            parentPort.postMessage({ 
-              type: 'error', 
-              error: error.message || 'Unknown worker error' 
-            });
-          });
-      `
-      );
-    }
-
-    // Get global mappings to pass to worker
-    const globalMappings = AgdaDocsIndexer.getGlobalMappings();
-
-    // Create a worker with limited memory
-    const worker = new Worker(workerScriptPath, {
-      workerData: {
-        inputDir,
-        outputDir,
-        files,
-        config,
-        globalMappings,
-      },
-      // Limit worker memory
-      resourceLimits: {
-        maxOldGenerationSizeMb: 512, // 512MB per worker
-        maxYoungGenerationSizeMb: 128, // 128MB for young generation
-      },
-    });
-
-    // Handle messages from worker
-    worker.on('message', (message) => {
-      if (message.type === 'progress') {
-        // File processed, could update progress here if needed
-      } else if (message.type === 'error') {
-        console.error(`Error processing ${message.file}: ${message.error}`);
-      } else if (message.type === 'complete') {
-        // Worker is done
-        resolve(message.count);
-      }
-    });
-
-    // Handle worker errors
-    worker.on('error', (error) => {
-      reject(new Error(`Worker error: ${error.message}`));
-    });
-
-    // Handle worker exit
-    worker.on('exit', (code) => {
-      if (code !== 0) {
-        reject(new Error(`Worker stopped with exit code ${code}`));
-      }
-    });
-  });
-}
-
-// Memory-efficient file processing with streaming
-async function processFilesInMemoryEfficientBatches(
-  inputDir: string,
-  outputDir: string,
-  files: string[],
-  config: Record<string, unknown>,
+  config: AgdaDocsConfig,
   progressCallback: (current: number, total: number) => void
 ): Promise<void> {
+  // Create transformer with config
+  const transformer = new AgdaDocsTransformer(config);
+  
   let processedCount = 0;
-  const batchSize = MEMORY_EFFICIENT_BATCH_SIZE;
-
-  // Process files in small sequential batches to minimize memory usage
-  for (let i = 0; i < files.length; i += batchSize) {
-    const batch = files.slice(i, i + batchSize);
-
+  
+  for (const file of files) {
     try {
-      const count = await processFileBatch(inputDir, outputDir, batch, config);
-      processedCount += count;
+      const inputPath = path.join(inputDir, file);
+      const outputPath = path.join(outputDir, file);
+      const content = fs.readFileSync(inputPath, 'utf8');
+      
+      // Process the file
+      transformer.setContent(content, file);
+      const processed = transformer.transform();
+      
+      // Ensure output directory exists
+      const outputDirForFile = path.dirname(outputPath);
+      if (!fs.existsSync(outputDirForFile)) {
+        fs.mkdirSync(outputDirForFile, { recursive: true });
+      }
+      
+      fs.writeFileSync(outputPath, processed);
+      
+      processedCount++;
       progressCallback(processedCount, files.length);
-
-      // Small delay to allow memory cleanup
-      await new Promise((resolve) => setTimeout(resolve, 100));
     } catch (error) {
-      console.error(`Error processing batch starting at index ${i}:`, error);
+      console.error(`Error processing ${file}:`, error);
       throw error;
     }
   }
@@ -326,6 +209,12 @@ program
         fs.mkdirSync(outputDir, { recursive: true });
       }
 
+      // Ensure config has required inputDir property
+      const agdaConfig: AgdaDocsConfig = {
+        ...config,
+        inputDir: inputDir
+      };
+
       // Get list of HTML files
       const files = fs.readdirSync(inputDir).filter((file) => file.endsWith('.html'));
 
@@ -349,11 +238,11 @@ program
 
       const processingProgressBar = createProgressBar();
 
-      await processFilesInMemoryEfficientBatches(
+      await processFiles(
         inputDir,
         outputDir,
         files,
-        config,
+        agdaConfig,
         processingProgressBar
       );
 
