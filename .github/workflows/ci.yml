@@ -65,12 +65,23 @@ jobs:
         </html>
         EOF
 
+    - name: Create minimal test config
+      run: |
+        cat > test-config.json << 'EOF'
+        {
+          "githubUrl": "https://github.com/will-break-it/agda-web-docs-lib",
+          "modules": ["Test"],
+          "inputDir": "test-html/"
+        }
+        EOF
+
     - name: Test GitHub Action
       uses: ./
       with:
         input-dir: 'test-html/'
         github-url: 'https://github.com/will-break-it/agda-web-docs-lib'
         modules: 'Test'
+        config-file: 'test-config.json'
 
     - name: Validate transformation
       run: |
