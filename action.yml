@@ -1,56 +1,68 @@
-name: 'Transform Agda HTML Documentation'
-description: 'Transform Agda-generated HTML documentation with modern web features'
-author: 'William Wolff'
+name: "Transform Agda HTML Documentation"
+description: "Transform Agda-generated HTML documentation with modern web features"
+author: "William Wolff"
 
 branding:
-  icon: 'book-open'
-  color: 'blue'
+  icon: "book-open"
+  color: "blue"
 
 inputs:
   input-dir:
-    description: 'Directory containing the HTML files to transform'
+    description: "Directory containing the HTML files to transform"
     required: true
   output-dir:
-    description: 'Directory to output the transformed HTML files (defaults to input-dir for in-place transformation)'
+    description: "Directory to output the transformed HTML files (defaults to input-dir for in-place transformation)"
     required: false
-    default: ''
+    default: ""
   config-file:
-    description: 'Path to the agda-docs configuration file'
+    description: "Path to the agda-docs configuration file"
     required: false
-    default: 'agda-docs.config.json'
+    default: "agda-docs.config.json"
   back-button-url:
-    description: 'URL for the back button (overrides config file)'
+    description: "URL for the back button (overrides config file)"
     required: false
-    default: ''
+    default: ""
   modules:
-    description: 'Comma-separated list of module prefixes (overrides config file)'
+    description: "Comma-separated list of module prefixes (overrides config file)"
     required: false
-    default: ''
+    default: ""
   github-url:
-    description: 'GitHub repository URL for source links (overrides config file)'
+    description: "GitHub repository URL for source links (overrides config file)"
     required: false
-    default: ''
+    default: ""
   node-options:
-    description: 'Node.js options (e.g., --max-old-space-size=4096 for large documentation sets)'
+    description: "Node.js options (e.g., --max-old-space-size=4096 for large documentation sets)"
     required: false
-    default: '--max-old-space-size=2048'
+    default: "--max-old-space-size=2048"
+  cache-dependency-path:
+    description: "Path to package-lock.json for npm caching (if not provided, caching will be disabled)"
+    required: false
+    default: ""
 
 outputs:
   files-processed:
-    description: 'Number of HTML files that were processed'
+    description: "Number of HTML files that were processed"
     value: ${{ steps.transform.outputs.files-processed }}
   output-directory:
-    description: 'Directory containing the transformed HTML files'
+    description: "Directory containing the transformed HTML files"
     value: ${{ steps.transform.outputs.output-directory }}
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
-    - name: 📦 Setup Node.js
+    - name: 📦 Setup Node.js (with caching)
+      if: ${{ inputs.cache-dependency-path != '' }}
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
-        cache: 'npm'
+        node-version: "20"
+        cache: "npm"
+        cache-dependency-path: ${{ inputs.cache-dependency-path }}
+
+    - name: 📦 Setup Node.js (no caching)
+      if: ${{ inputs.cache-dependency-path == '' }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
 
     - name: 🔨 Build local package
       shell: bash
@@ -58,7 +70,7 @@ runs:
         echo "Installing dependencies and building local package..."
         npm install
         npm run build
-        
+
         # Make the CLI available globally for this action
         npm link
 
@@ -66,36 +78,36 @@ runs:
       shell: bash
       run: |
         CONFIG_FILE="${{ inputs.config-file }}"
-        
+
         # Create config file if it doesn't exist or if overrides are provided
         if [ ! -f "$CONFIG_FILE" ] || [ -n "${{ inputs.back-button-url }}" ] || [ -n "${{ inputs.modules }}" ] || [ -n "${{ inputs.github-url }}" ]; then
           echo "Creating/updating configuration file: $CONFIG_FILE"
-          
+
           # Read existing config or create default
           if [ -f "$CONFIG_FILE" ]; then
             CONFIG_CONTENT=$(cat "$CONFIG_FILE")
           else
             CONFIG_CONTENT='{}'
           fi
-          
+
           # Apply overrides using node
           node -e "
             const fs = require('fs');
             let config = $CONFIG_CONTENT;
-            
+
             if ('${{ inputs.back-button-url }}') config.backButtonUrl = '${{ inputs.back-button-url }}';
             if ('${{ inputs.github-url }}') config.githubUrl = '${{ inputs.github-url }}';
             if ('${{ inputs.modules }}') {
               config.modules = '${{ inputs.modules }}'.split(',').map(m => m.trim());
             }
-            
+
             // Ensure inputDir is set
             if (!config.inputDir) config.inputDir = '${{ inputs.input-dir }}';
-            
+
             fs.writeFileSync('$CONFIG_FILE', JSON.stringify(config, null, 2));
           "
         fi
-        
+
         echo "Configuration file contents:"
         cat "$CONFIG_FILE"
 
@@ -108,24 +120,24 @@ runs:
         INPUT_DIR="${{ inputs.input-dir }}"
         OUTPUT_DIR="${{ inputs.output-dir }}"
         CONFIG_FILE="${{ inputs.config-file }}"
-        
+
         # Validate input directory exists
         if [ ! -d "$INPUT_DIR" ]; then
           echo "❌ Input directory '$INPUT_DIR' does not exist"
           exit 1
         fi
-        
+
         # Count HTML files before processing
         HTML_COUNT=$(find "$INPUT_DIR" -name '*.html' | wc -l)
         echo "Found $HTML_COUNT HTML files to process"
-        
+
         if [ "$HTML_COUNT" -eq "0" ]; then
           echo "⚠️ No HTML files found in $INPUT_DIR"
           echo "files-processed=0" >> $GITHUB_OUTPUT
           echo "output-directory=$INPUT_DIR" >> $GITHUB_OUTPUT
           exit 0
         fi
-        
+
         # Determine output directory
         if [ -z "$OUTPUT_DIR" ]; then
           OUTPUT_DIR="$INPUT_DIR"
@@ -140,7 +152,7 @@ runs:
           fi
           agda-docs process -i "$OUTPUT_DIR" -c "$CONFIG_FILE"
         fi
-        
+
         echo "✅ Successfully processed $HTML_COUNT HTML files"
         echo "files-processed=$HTML_COUNT" >> $GITHUB_OUTPUT
         echo "output-directory=$OUTPUT_DIR" >> $GITHUB_OUTPUT
@@ -150,16 +162,16 @@ runs:
       run: |
         OUTPUT_DIR="${{ steps.transform.outputs.output-directory }}"
         FILES_PROCESSED="${{ steps.transform.outputs.files-processed }}"
-        
+
         echo "## 📚 Agda Documentation Processing Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "- **Files processed:** $FILES_PROCESSED" >> $GITHUB_STEP_SUMMARY
         echo "- **Output directory:** \`$OUTPUT_DIR\`" >> $GITHUB_STEP_SUMMARY
         echo "- **Configuration:** \`${{ inputs.config-file }}\`" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        
+
         if [ "$FILES_PROCESSED" -gt "0" ]; then
           echo "✅ **Status:** Successfully enhanced Agda documentation with modern web features!" >> $GITHUB_STEP_SUMMARY
         else
           echo "⚠️ **Status:** No HTML files were processed." >> $GITHUB_STEP_SUMMARY
-        fi 
+        fi
