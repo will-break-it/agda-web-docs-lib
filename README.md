@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/will-break-it/agda-web-docs-lib/actions/workflows/ci.yml/badge.svg)](https://github.com/will-break-it/agda-web-docs-lib/actions/workflows/ci.yml)
 [![npm version](https://badge.fury.io/js/agda-web-docs-lib.svg)](https://badge.fury.io/js/agda-web-docs-lib)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 Transform your Agda HTML documentation with modern web features, responsive design, and powerful search capabilities.
 
