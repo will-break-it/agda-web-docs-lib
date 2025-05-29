@@ -212,9 +212,7 @@ export class AgdaDocsSearcher {
    */
   public static writeSearchIndex(outputDir: string, index: SearchIndex): void {
     try {
-      console.log(`Debug: writeSearchIndex called with outputDir: ${outputDir}`);
       const outputPath = path.join(outputDir, 'search-index.json');
-      console.log(`Debug: Computed outputPath: ${outputPath}`);
 
       // Check if the index is too large by attempting to stringify it
       let jsonString: string;

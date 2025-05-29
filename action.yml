@@ -52,16 +52,15 @@ runs:
         node-version: '20'
         cache: 'npm'
 
-    - name: 📥 Install agda-web-docs-lib
+    - name: 🔨 Build local package
       shell: bash
       run: |
-        # Check if agda-docs command is available
-        if ! command -v agda-docs &> /dev/null && ! npx agda-docs --version &> /dev/null; then
-          echo "Installing agda-web-docs-lib..."
-          npm install agda-web-docs-lib
-        else
-          echo "agda-docs command already available"
-        fi
+        echo "Installing dependencies and building local package..."
+        npm install
+        npm run build
+        
+        # Make the CLI available globally for this action
+        npm link
 
     - name: 📝 Create configuration file if needed
       shell: bash
@@ -131,7 +130,7 @@ runs:
         if [ -z "$OUTPUT_DIR" ]; then
           OUTPUT_DIR="$INPUT_DIR"
           echo "🔄 Transforming files in-place: $INPUT_DIR"
-          npx agda-docs process -i "$INPUT_DIR" -c "$CONFIG_FILE"
+          agda-docs process -i "$INPUT_DIR" -c "$CONFIG_FILE"
         else
           echo "🔄 Transforming files from $INPUT_DIR to $OUTPUT_DIR"
           # Copy files first if different directories
@@ -139,7 +138,7 @@ runs:
             mkdir -p "$OUTPUT_DIR"
             cp -r "$INPUT_DIR"/* "$OUTPUT_DIR"/
           fi
-          npx agda-docs process -i "$OUTPUT_DIR" -c "$CONFIG_FILE"
+          agda-docs process -i "$OUTPUT_DIR" -c "$CONFIG_FILE"
         fi
         
         echo "✅ Successfully processed $HTML_COUNT HTML files"
