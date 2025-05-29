@@ -87,6 +87,8 @@ function createProgressBar(width: number = 40): (current: number, total: number)
  * Copies script and style assets to the output directory
  */
 function copyAssets(outputDir: string): void {
+  console.log(`Debug: copyAssets called with outputDir: ${outputDir}`);
+
   // Find all script and style files
   const possibleScriptDirs = [
     // Production path (when installed as a package)
@@ -106,6 +108,9 @@ function copyAssets(outputDir: string): void {
     path.join(__dirname, '..', '..', 'src', 'styles'),
   ];
 
+  console.log(`Debug: Possible script dirs: ${possibleScriptDirs.join(', ')}`);
+  console.log(`Debug: Possible style dirs: ${possibleStyleDirs.join(', ')}`);
+
   // Find the first existing scripts directory
   let scriptsDir: string | null = null;
   for (const dir of possibleScriptDirs) {
@@ -124,6 +129,9 @@ function copyAssets(outputDir: string): void {
     }
   }
 
+  console.log(`Debug: Found scriptsDir: ${scriptsDir}`);
+  console.log(`Debug: Found stylesDir: ${stylesDir}`);
+
   // Copy all JavaScript files from the scripts directory
   if (scriptsDir) {
     try {
@@ -132,6 +140,7 @@ function copyAssets(outputDir: string): void {
       for (const file of scriptFiles) {
         const sourcePath = path.join(scriptsDir, file);
         const destPath = path.join(outputDir, file);
+        console.log(`Debug: Copying script from ${sourcePath} to ${destPath}`);
         fs.copyFileSync(sourcePath, destPath);
         console.log(`Copied script: ${file}`);
       }
@@ -150,6 +159,7 @@ function copyAssets(outputDir: string): void {
       for (const file of styleFiles) {
         const sourcePath = path.join(stylesDir, file);
         const destPath = path.join(outputDir, file);
+        console.log(`Debug: Copying style from ${sourcePath} to ${destPath}`);
         fs.copyFileSync(sourcePath, destPath);
         console.log(`Copied style: ${file}`);
       }
