@@ -34,27 +34,27 @@ async function processFiles(
 ): Promise<void> {
   // Create transformer with config
   const transformer = new AgdaDocsTransformer(config);
-  
+
   let processedCount = 0;
-  
+
   for (const file of files) {
     try {
       const inputPath = path.join(inputDir, file);
       const outputPath = path.join(outputDir, file);
       const content = fs.readFileSync(inputPath, 'utf8');
-      
+
       // Process the file
       transformer.setContent(content, file);
       const processed = transformer.transform();
-      
+
       // Ensure output directory exists
       const outputDirForFile = path.dirname(outputPath);
       if (!fs.existsSync(outputDirForFile)) {
         fs.mkdirSync(outputDirForFile, { recursive: true });
       }
-      
+
       fs.writeFileSync(outputPath, processed);
-      
+
       processedCount++;
       progressCallback(processedCount, files.length);
     } catch (error) {
@@ -172,7 +172,10 @@ program
     'Path to config file (defaults to agda-docs.config.json in current directory)'
   )
   .option('-i, --input <path>', 'Input directory containing HTML files', '.')
-  .option('-o, --output <path>', 'Output directory for processed files (defaults to input directory)')
+  .option(
+    '-o, --output <path>',
+    'Output directory for processed files (defaults to input directory)'
+  )
   .action(async (options) => {
     try {
       // Find config file
@@ -212,7 +215,7 @@ program
       // Ensure config has required inputDir property
       const agdaConfig: AgdaDocsConfig = {
         ...config,
-        inputDir: inputDir
+        inputDir: inputDir,
       };
 
       // Get list of HTML files
@@ -238,13 +241,7 @@ program
 
       const processingProgressBar = createProgressBar();
 
-      await processFiles(
-        inputDir,
-        outputDir,
-        files,
-        agdaConfig,
-        processingProgressBar
-      );
+      await processFiles(inputDir, outputDir, files, agdaConfig, processingProgressBar);
 
       // Build search index after processing using the existing position mappings
       const searchIndex = await AgdaDocsSearcher.buildSearchIndex(
