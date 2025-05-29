@@ -76,6 +76,14 @@ jobs:
       run: |
         echo "Checking transformed HTML..."
         
+        # First, list what's actually in the directory
+        echo "Contents of test-html/:"
+        ls -la test-html/
+        
+        # Show the HTML content to see what was transformed
+        echo "HTML content after transformation:"
+        cat test-html/index.html
+        
         # Check that CSS files were copied
         if [ ! -f "test-html/base.css" ]; then
           echo "❌ base.css not found"
