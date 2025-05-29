@@ -55,8 +55,12 @@ runs:
     - name: 📥 Install agda-web-docs-lib
       shell: bash
       run: |
-        if [ ! -f "package.json" ] || ! grep -q "agda-web-docs-lib" package.json; then
+        # Check if agda-docs command is available
+        if ! command -v agda-docs &> /dev/null && ! npx agda-docs --version &> /dev/null; then
+          echo "Installing agda-web-docs-lib..."
           npm install agda-web-docs-lib
+        else
+          echo "agda-docs command already available"
         fi
 
     - name: 📝 Create configuration file if needed
