@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+# Run build to ensure everything compiles before pushing
+npm run build 
