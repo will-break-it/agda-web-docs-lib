@@ -171,8 +171,8 @@ program
     '-c, --config <path>',
     'Path to config file (defaults to agda-docs.config.json in current directory)'
   )
-  .option('-i, --input <path>', 'Input directory containing HTML files', 'static/formal-spec')
-  .option('-o, --output <path>', 'Output directory for processed files', 'static/formal-spec')
+  .option('-i, --input <path>', 'Input directory containing HTML files', '.')
+  .option('-o, --output <path>', 'Output directory for processed files (defaults to input directory)')
   .action(async (options) => {
     try {
       // Find config file
@@ -203,8 +203,8 @@ program
         process.exit(1);
       }
 
-      // Create output directory if it doesn't exist
-      const outputDir = path.resolve(options.output);
+      // Create output directory if it doesn't exist - default to input dir if not specified
+      const outputDir = path.resolve(options.output || options.input);
       if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
       }
