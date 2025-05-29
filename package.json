@@ -30,8 +30,7 @@
     "prepare": "husky",
     "release": "./scripts/release.sh",
     "preversion": "npm run build && npm run lint && npm run format && npm test",
-    "prepublishOnly": "npm test && npm run build",
-    "postversion": "git push && git push --tags"
+    "prepublishOnly": "npm test && npm run build"
   },
   "keywords": [
     "agda",
