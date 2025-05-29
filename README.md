@@ -106,42 +106,6 @@ jobs:
           publish_dir: html/
 ```
 
-### Reusable Workflow
-
-For more complex setups, use our reusable workflow:
-
-```yaml
-jobs:
-  transform-docs:
-    uses: will-break-it/agda-web-docs-lib/.github/workflows/reusable-workflow.yml@v1
-    with:
-      input-dir: 'html/'
-      github-url: ${{ github.server_url }}/${{ github.repository }}
-      modules: 'Your.Module.Prefix'
-    cache-dependency-path: 'package-lock.json'  # Optional: enable npm caching
-      artifact-name: 'my-agda-docs'
-```
-
-### Programmatic Usage
-
-```typescript
-import { AgdaDocsTransformer, AgdaDocsIndexer } from 'agda-web-docs-lib';
-
-const config = {
-  backButtonUrl: '/',
-  modules: ['Your.Module'],
-  githubUrl: 'https://github.com/your-user/your-project'
-};
-
-// Build position mappings
-await AgdaDocsIndexer.buildPositionMappings('path/to/html');
-
-// Transform files
-const transformer = new AgdaDocsTransformer(config);
-transformer.setContent(htmlContent, 'file.html');
-const processed = transformer.transform();
-```
-
 ## 📚 Examples
 
 - [Leios Formal Specification](https://leios.cardano-scaling.org/formal-spec/Leios.Base.html)
