@@ -45,9 +45,9 @@ jobs:
           
       - name: Run full test suite
         run: |
+          npm run build
           npm run lint
           npm run format:check
-          npm run build  
           npm test
           echo "✅ All tests passed"
           
