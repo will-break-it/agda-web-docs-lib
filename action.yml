@@ -67,6 +67,7 @@ runs:
     - name: 🔨 Build local package
       shell: bash
       run: |
+        cd $GITHUB_ACTION_PATH
         echo "Installing dependencies and building local package..."
         npm install
         npm run build
