@@ -22,12 +22,15 @@ Transform your Agda HTML documentation with modern web features, responsive desi
 
 ```yaml
 - name: 🔄 Transform Agda documentation  
-  uses: will-break-it/agda-web-docs-lib@v0.7.1
+  uses: will-break-it/agda-web-docs-lib@v1
   with:
     input-dir: 'html/'
     github-url: 'https://github.com/your-user/your-project'
     modules: 'Your.Module.Prefix'
+    cache-dependency-path: 'package-lock.json'  # Optional: enable npm caching
 ```
+
+**Performance Tip:** Include `cache-dependency-path` to enable npm caching and speed up your workflows.
 
 ### CLI
 
@@ -101,11 +104,12 @@ jobs:
         run: agda --html --html-dir=html/ src/Main.agda
         
       - name: Transform documentation
-        uses: will-break-it/agda-web-docs-lib@v0.7.1
+        uses: will-break-it/agda-web-docs-lib@v1
         with:
           input-dir: 'html/'
           github-url: ${{ github.server_url }}/${{ github.repository }}
           modules: 'Your.Module.Prefix'
+    cache-dependency-path: 'package-lock.json'  # Optional: enable npm caching
           
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
@@ -121,11 +125,12 @@ For more complex setups, use our reusable workflow:
 ```yaml
 jobs:
   transform-docs:
-    uses: will-break-it/agda-web-docs-lib/.github/workflows/reusable-workflow.yml@v0.7.1
+    uses: will-break-it/agda-web-docs-lib/.github/workflows/reusable-workflow.yml@v1
     with:
       input-dir: 'html/'
       github-url: ${{ github.server_url }}/${{ github.repository }}
       modules: 'Your.Module.Prefix'
+    cache-dependency-path: 'package-lock.json'  # Optional: enable npm caching
       artifact-name: 'my-agda-docs'
 ```
 
