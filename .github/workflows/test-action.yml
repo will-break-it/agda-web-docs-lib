@@ -78,6 +78,12 @@ jobs:
         run: |
           echo "🎨 Testing CSS integration..."
           
+          # Fail fast if the action didn't run successfully
+          if [ "${{ steps.test.outcome }}" != "success" ]; then
+            echo "❌ Main action failed, skipping validation"
+            exit 1
+          fi
+          
           # Check that CSS files are properly linked
           if ! grep -q 'href="base.css"' test-html/index.html; then
             echo "❌ base.css not linked"
@@ -137,6 +143,12 @@ jobs:
         run: |
           echo "⚡ Testing JavaScript integration..."
           
+          # Fail fast if the action didn't run successfully
+          if [ "${{ steps.test.outcome }}" != "success" ]; then
+            echo "❌ Main action failed, skipping validation"
+            exit 1
+          fi
+          
           # Check that all required JS files are linked
           if ! grep -q 'src="themeInit.js"' test-html/index.html; then
             echo "❌ themeInit.js not linked"
@@ -192,6 +204,12 @@ jobs:
       - name: ✅ Validate DOM structure
         run: |
           echo "🏗️ Testing DOM structure..."
+          
+          # Fail fast if the action didn't run successfully
+          if [ "${{ steps.test.outcome }}" != "success" ]; then
+            echo "❌ Main action failed, skipping validation"
+            exit 1
+          fi
           
           # Check for header structure
           if ! grep -q '<header>' test-html/index.html; then
@@ -271,6 +289,12 @@ jobs:
         run: |
           echo "📝 Testing code block enhancements..."
           
+          # Fail fast if the action didn't run successfully
+          if [ "${{ steps.test.outcome }}" != "success" ]; then
+            echo "❌ Main action failed, skipping validation"
+            exit 1
+          fi
+          
           # Check for code container structure
           if ! grep -q 'class="code-container"' test-html/index.html; then
             echo "❌ Code container not found"
@@ -326,6 +350,12 @@ jobs:
         run: |
           echo "📱 Testing responsive design elements..."
           
+          # Fail fast if the action didn't run successfully
+          if [ "${{ steps.test.outcome }}" != "success" ]; then
+            echo "❌ Main action failed, skipping validation"
+            exit 1
+          fi
+          
           # Check for viewport meta tag
           if ! grep -q 'name="viewport"' test-html/index.html; then
             echo "❌ Viewport meta tag not found"
@@ -342,6 +372,12 @@ jobs:
       - name: ✅ Validate accessibility features
         run: |
           echo "♿ Testing accessibility features..."
+          
+          # Fail fast if the action didn't run successfully
+          if [ "${{ steps.test.outcome }}" != "success" ]; then
+            echo "❌ Main action failed, skipping validation"
+            exit 1
+          fi
           
           # Check for aria-label attributes
           if ! grep -q 'aria-label=' test-html/index.html; then
@@ -361,6 +397,12 @@ jobs:
         run: |
           echo "🔍 Testing search functionality setup..."
           
+          # Fail fast if the action didn't run successfully
+          if [ "${{ steps.test.outcome }}" != "success" ]; then
+            echo "❌ Main action failed, skipping validation"
+            exit 1
+          fi
+          
           # Check for type preview container
           if ! grep -q 'id="type-preview-container"' test-html/index.html; then
             echo "❌ Type preview container not found"
@@ -372,6 +414,12 @@ jobs:
       - name: ✅ Validate module structure
         run: |
           echo "📂 Testing module structure..."
+          
+          # Fail fast if the action didn't run successfully
+          if [ "${{ steps.test.outcome }}" != "success" ]; then
+            echo "❌ Main action failed, skipping validation"
+            exit 1
+          fi
           
           # Both test files should have been processed
           if [ ! -f "test-html/Test.Base.html" ]; then
@@ -402,6 +450,12 @@ jobs:
 
       - name: ✅ Final validation
         run: |
+          # Fail fast if the action didn't run successfully
+          if [ "${{ steps.test.outcome }}" != "success" ]; then
+            echo "❌ Main action failed, cannot perform final validation"
+            exit 1
+          fi
+          
           echo "Files processed: ${{ steps.test.outputs.files-processed }}"
           echo "Output directory: ${{ steps.test.outputs.output-directory }}"
           

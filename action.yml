@@ -162,4 +162,5 @@ runs:
         if [ "$FILES_PROCESSED" -gt "0" ]; then
           echo "✅ **Status:** Successfully enhanced Agda documentation with modern web features!" >> $GITHUB_STEP_SUMMARY
         else
-          echo "⚠️ **Status:** No HTML files were processed." >> $GITHUB_STEP_SUMMARY 
+          echo "⚠️ **Status:** No HTML files were processed." >> $GITHUB_STEP_SUMMARY
+        fi 
