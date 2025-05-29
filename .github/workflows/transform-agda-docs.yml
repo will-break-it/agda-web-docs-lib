@@ -1,0 +1,106 @@
+name: 'Transform Agda Documentation'
+
+on:
+  workflow_call:
+    inputs:
+      input-dir:
+        description: 'Directory containing the HTML files to transform'
+        required: true
+        type: string
+      output-dir:
+        description: 'Directory to output the transformed HTML files'
+        required: false
+        type: string
+        default: ''
+      config-file:
+        description: 'Path to the agda-docs configuration file'
+        required: false
+        type: string
+        default: 'agda-docs.config.json'
+      back-button-url:
+        description: 'URL for the back button'
+        required: false
+        type: string
+        default: ''
+      modules:
+        description: 'Comma-separated list of module prefixes'
+        required: false
+        type: string
+        default: ''
+      github-url:
+        description: 'GitHub repository URL for source links'
+        required: false
+        type: string
+        default: ''
+      node-options:
+        description: 'Node.js options for memory/performance tuning'
+        required: false
+        type: string
+        default: '--max-old-space-size=2048'
+      upload-artifact:
+        description: 'Whether to upload the transformed files as an artifact'
+        required: false
+        type: boolean
+        default: true
+      artifact-name:
+        description: 'Name for the uploaded artifact'
+        required: false
+        type: string
+        default: 'agda-docs-transformed'
+      retention-days:
+        description: 'Number of days to retain the artifact'
+        required: false
+        type: number
+        default: 30
+
+    outputs:
+      files-processed:
+        description: 'Number of HTML files that were processed'
+        value: ${{ jobs.transform.outputs.files-processed }}
+      output-directory:
+        description: 'Directory containing the transformed HTML files'
+        value: ${{ jobs.transform.outputs.output-directory }}
+      artifact-name:
+        description: 'Name of the uploaded artifact (if upload-artifact is true)'
+        value: ${{ inputs.artifact-name }}
+
+jobs:
+  transform:
+    name: 'Transform Agda HTML Documentation'
+    runs-on: ubuntu-latest
+    outputs:
+      files-processed: ${{ steps.transform.outputs.files-processed }}
+      output-directory: ${{ steps.transform.outputs.output-directory }}
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔄 Transform Agda documentation
+        id: transform
+        uses: ./
+        with:
+          input-dir: ${{ inputs.input-dir }}
+          output-dir: ${{ inputs.output-dir }}
+          config-file: ${{ inputs.config-file }}
+          back-button-url: ${{ inputs.back-button-url }}
+          modules: ${{ inputs.modules }}
+          github-url: ${{ inputs.github-url }}
+          node-options: ${{ inputs.node-options }}
+
+      - name: 📤 Upload transformed documentation
+        if: inputs.upload-artifact && steps.transform.outputs.files-processed > 0
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: ${{ steps.transform.outputs.output-directory }}
+          retention-days: ${{ inputs.retention-days }}
+
+      - name: 📊 Output summary
+        run: |
+          echo "✅ Transformation completed!"
+          echo "Files processed: ${{ steps.transform.outputs.files-processed }}"
+          echo "Output directory: ${{ steps.transform.outputs.output-directory }}"
+          if [ "${{ inputs.upload-artifact }}" = "true" ] && [ "${{ steps.transform.outputs.files-processed }}" -gt "0" ]; then
+            echo "Artifact uploaded as: ${{ inputs.artifact-name }}"
+          fi 

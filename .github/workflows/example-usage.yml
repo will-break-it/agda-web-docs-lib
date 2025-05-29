@@ -1,0 +1,68 @@
+name: 'Example: Transform Agda Documentation'
+
+# This is an example workflow showing how to use agda-web-docs-lib as a GitHub Action
+# Copy and adapt this to your own repository
+
+on:
+  workflow_dispatch: # Manual trigger for testing
+  push:
+    paths:
+      - 'html/**'
+      - 'agda-docs.config.json'
+
+jobs:
+  transform-agda-docs:
+    name: 'Transform Agda HTML Documentation'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      # Example: If you have HTML files already in your repository
+      - name: 🔄 Transform existing HTML documentation
+        uses: ./  # Uses the action from this repository
+        with:
+          input-dir: 'html/'
+          config-file: 'agda-docs.config.json'
+          github-url: ${{ github.server_url }}/${{ github.repository }}
+          modules: 'Example.Module'
+
+  # Alternative: Complete example with HTML generation
+  generate-and-transform:
+    name: 'Generate and Transform Agda Documentation'
+    runs-on: ubuntu-latest
+    if: false  # Disabled by default - remove this line to enable
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 1: Generate HTML from Agda sources
+      - name: 🏗️ Setup Agda
+        uses: wenkokke/setup-agda@v2
+        with:
+          agda-version: '2.6.4'
+
+      - name: 📚 Generate HTML documentation
+        run: |
+          mkdir -p html/
+          # Example: Generate HTML for your main module
+          # agda --html --html-dir=html/ src/Main.agda
+
+      # Step 2: Transform the generated HTML
+      - name: 🔄 Transform Agda documentation
+        uses: ./
+        with:
+          input-dir: 'html/'
+          github-url: ${{ github.server_url }}/${{ github.repository }}
+          modules: 'YourProject.Main'
+          back-button-url: '/'
+
+      # Step 3: Deploy to GitHub Pages (optional)
+      - name: 🚀 Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: html/ 

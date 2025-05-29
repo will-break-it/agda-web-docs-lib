@@ -79,6 +79,148 @@ npm install agda-web-docs-lib
 
 ## Usage
 
+### GitHub Actions
+
+The easiest way to integrate this library into your CI/CD pipeline is using the provided GitHub Actions.
+
+#### Option 1: Using the Action Directly
+
+Add this step to your workflow:
+
+```yaml
+- name: 🔄 Transform Agda documentation
+  uses: will-break-it/agda-web-docs-lib@v0.7.1
+  with:
+    input-dir: 'html/'
+    config-file: 'agda-docs.config.json'
+    github-url: 'https://github.com/your-user/your-project'
+    modules: 'Your.Module.Prefix'
+```
+
+#### Option 2: Using the Reusable Workflow
+
+Create `.github/workflows/docs.yml`:
+
+```yaml
+name: 'Build Documentation'
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-agda-docs:
+    uses: will-break-it/agda-web-docs-lib/.github/workflows/transform-agda-docs.yml@v0.7.1
+    with:
+      input-dir: 'html/'
+      config-file: 'agda-docs.config.json'
+      github-url: 'https://github.com/your-user/your-project'
+      modules: 'Your.Module.Prefix'
+      artifact-name: 'enhanced-agda-docs'
+      
+  deploy:
+    needs: build-agda-docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Download transformed docs
+        uses: actions/download-artifact@v4
+        with:
+          name: enhanced-agda-docs
+          path: docs/
+          
+      - name: 🚀 Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/
+```
+
+#### Complete Integration Example
+
+Here's a complete workflow that generates Agda documentation and enhances it:
+
+```yaml
+name: 'Generate and Deploy Agda Documentation'
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  generate-agda-html:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: 🏗️ Setup Agda
+        uses: wenkokke/setup-agda@v2
+        with:
+          agda-version: '2.6.4'
+          
+      - name: 📚 Generate HTML documentation
+        run: |
+          agda --html --html-dir=html/ src/Main.agda
+          
+      - name: 📤 Upload HTML artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: agda-html-raw
+          path: html/
+
+  enhance-documentation:
+    needs: generate-agda-html
+    uses: will-break-it/agda-web-docs-lib/.github/workflows/transform-agda-docs.yml@v0.7.1
+    with:
+      input-dir: 'html/'
+      github-url: ${{ github.server_url }}/${{ github.repository }}
+      modules: 'Your.Module.Prefix'
+      back-button-url: '/'
+      artifact-name: 'enhanced-agda-docs'
+      
+  deploy:
+    needs: enhance-documentation
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 📥 Download enhanced docs
+        uses: actions/download-artifact@v4
+        with:
+          name: enhanced-agda-docs
+          path: docs/
+          
+      - name: 🚀 Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          artifact: enhanced-agda-docs
+```
+
+#### Action Inputs
+
+| Input | Description | Required | Default |
+|-------|-------------|----------|---------|
+| `input-dir` | Directory containing HTML files to transform | ✅ | |
+| `output-dir` | Output directory (defaults to in-place transformation) | ❌ | `''` |
+| `config-file` | Path to configuration file | ❌ | `agda-docs.config.json` |
+| `back-button-url` | URL for the back button | ❌ | `''` |
+| `modules` | Comma-separated module prefixes | ❌ | `''` |
+| `github-url` | GitHub repository URL for source links | ❌ | `''` |
+| `node-options` | Node.js memory/performance options | ❌ | `--max-old-space-size=2048` |
+
+#### Action Outputs
+
+| Output | Description |
+|--------|-------------|
+| `files-processed` | Number of HTML files processed |
+| `output-directory` | Path to the transformed files |
+
 ### Configuration
 
 Create `agda-docs.config.json` in your project root:
