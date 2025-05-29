@@ -131,7 +131,7 @@ runs:
         if [ -z "$OUTPUT_DIR" ]; then
           OUTPUT_DIR="$INPUT_DIR"
           echo "🔄 Transforming files in-place: $INPUT_DIR"
-          npx agda-docs process "$INPUT_DIR" "$CONFIG_FILE"
+          npx agda-docs process -i "$INPUT_DIR" -c "$CONFIG_FILE"
         else
           echo "🔄 Transforming files from $INPUT_DIR to $OUTPUT_DIR"
           # Copy files first if different directories
@@ -139,7 +139,7 @@ runs:
             mkdir -p "$OUTPUT_DIR"
             cp -r "$INPUT_DIR"/* "$OUTPUT_DIR"/
           fi
-          npx agda-docs process "$OUTPUT_DIR" "$CONFIG_FILE"
+          npx agda-docs process -i "$OUTPUT_DIR" -c "$CONFIG_FILE"
         fi
         
         echo "✅ Successfully processed $HTML_COUNT HTML files"
