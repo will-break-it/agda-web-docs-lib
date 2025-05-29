@@ -8,6 +8,7 @@ on:
 
 jobs:
   smoke-test:
+    name: 'Library Smoke Test'
     runs-on: ubuntu-latest
     
     steps:
@@ -23,8 +24,46 @@ jobs:
     - name: Install dependencies
       run: npm ci
     
-    - name: Quick smoke test
+    - name: Library smoke test
       run: |
         npm run build
         npm test
-        echo "✅ Smoke test passed - precommit hooks should have caught any issues" 
+        echo "✅ Library smoke test passed"
+
+  action-test:
+    name: 'GitHub Action Test'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Create test files
+      run: |
+        mkdir -p test-html/
+        cat > test-html/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html>
+        <head><title>Test</title></head>
+        <body>
+          <pre class="Agda">
+          <span class="Keyword">module</span> <span class="Module">Test</span> <span class="Keyword">where</span>
+          </pre>
+        </body>
+        </html>
+        EOF
+
+    - name: Test GitHub Action
+      uses: ./
+      with:
+        input-dir: 'test-html/'
+        github-url: 'https://github.com/will-break-it/agda-web-docs-lib'
+        modules: 'Test'
+
+    - name: Validate transformation
+      run: |
+        if ! grep -q 'class="sidebar"' test-html/index.html; then
+          echo "❌ Transformation failed"
+          exit 1
+        fi
+        echo "✅ GitHub Action test passed" 

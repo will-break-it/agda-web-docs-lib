@@ -114,6 +114,21 @@ jobs:
           publish_dir: html/
 ```
 
+### Reusable Workflow
+
+For more complex setups, use our reusable workflow:
+
+```yaml
+jobs:
+  transform-docs:
+    uses: will-break-it/agda-web-docs-lib/.github/workflows/reusable-workflow.yml@v0.7.1
+    with:
+      input-dir: 'html/'
+      github-url: ${{ github.server_url }}/${{ github.repository }}
+      modules: 'Your.Module.Prefix'
+      artifact-name: 'my-agda-docs'
+```
+
 ### Programmatic Usage
 
 ```typescript
