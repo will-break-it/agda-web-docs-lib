@@ -311,6 +311,21 @@ export class AgdaDocsTransformer {
     const document = this.dom.window.document;
     const head = document.head;
 
+    // Add charset meta tag if not present
+    if (!head.querySelector('meta[charset]')) {
+      const charset = document.createElement('meta');
+      charset.setAttribute('charset', 'UTF-8');
+      head.insertBefore(charset, head.firstChild);
+    }
+
+    // Add viewport meta tag for mobile responsiveness
+    if (!head.querySelector('meta[name="viewport"]')) {
+      const viewport = document.createElement('meta');
+      viewport.setAttribute('name', 'viewport');
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
+      head.appendChild(viewport);
+    }
+
     // Add base styles link
     const baseStyleLink = document.createElement('link');
     baseStyleLink.rel = 'stylesheet';
@@ -343,6 +358,18 @@ export class AgdaDocsTransformer {
     // Create left section
     const headerLeft = document.createElement('div');
     headerLeft.className = 'header-left';
+
+    // Add menu toggle button for mobile
+    const menuToggle = document.createElement('button');
+    menuToggle.className = 'menu-toggle';
+    menuToggle.setAttribute('title', 'Toggle navigation menu');
+    menuToggle.setAttribute('aria-label', 'Toggle navigation menu');
+    menuToggle.innerHTML = `
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <path fill="currentColor" d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z"/>
+      </svg>
+    `;
+    headerLeft.appendChild(menuToggle);
 
     // Add back button if URL is provided
     if (this.config.backButtonUrl) {
@@ -402,10 +429,16 @@ export class AgdaDocsTransformer {
     body.insertBefore(header, body.firstChild);
 
     // Add theme toggle script reference
-    const script = document.createElement('script');
-    script.src = 'themeToggle.js';
-    script.defer = true;
-    document.body.appendChild(script);
+    const themeScript = document.createElement('script');
+    themeScript.src = 'themeToggle.js';
+    themeScript.defer = true;
+    document.body.appendChild(themeScript);
+
+    // Add sidebar toggle script reference
+    const sidebarScript = document.createElement('script');
+    sidebarScript.src = 'sidebarToggle.js';
+    sidebarScript.defer = true;
+    document.body.appendChild(sidebarScript);
   }
 
   /**
