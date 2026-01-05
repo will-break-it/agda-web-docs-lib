@@ -124,6 +124,28 @@ describe('Agda Web Docs Library Tests', () => {
       assert(listContent.includes('href="#B1-L1"'), 'Line numbers should be linkable');
       assert(listContent.includes('href="#B2-L1"'), 'Line numbers in second block should be linkable');
     });
+
+    test('should link to correct block for positions in second block', async () => {
+      const config = {
+        inputDir: INPUT_DIR,
+        backButtonUrl: "/",
+        modules: ["Agda", "Data", "Project"]
+      };
+      fs.writeFileSync(path.join(TEST_DIR, 'config.json'), JSON.stringify(config, null, 2));
+
+      await runCLI(['process', '-i', INPUT_DIR, '-o', OUTPUT_DIR, '-c', path.join(TEST_DIR, 'config.json')]);
+
+      const listContent = fs.readFileSync(path.join(OUTPUT_DIR, 'Agda.Data.List.html'), 'utf8');
+
+      // Position 617 (_++_ function) is in the second block
+      // Links to it should point to B2, not B1
+      // The fixture has references to position 617 from within the same file
+      assert(listContent.includes('href="#B2-L'), 'Links to second block positions should point to B2');
+
+      // Should NOT have B1 links to second-block content
+      // Position 617 should be mapped to B2, not B1
+      assert(listContent.includes('data-block-id="B2"'), 'Second block positions should have data-block-id="B2"');
+    });
   });
 
   describe('Type Preview Integration', () => {

@@ -8,6 +8,7 @@ export class AgdaDocsTransformer {
   private config: AgdaDocsConfig;
   private dom: JSDOM;
   private currentFile: string = '';
+  private positionToBlockMap: Map<string, string> = new Map();
 
   constructor(config: AgdaDocsConfig) {
     this.config = config;
@@ -25,6 +26,29 @@ export class AgdaDocsTransformer {
   }
 
   /**
+   * Builds a mapping of Agda position IDs to their containing block IDs.
+   * Must be called before addLineNumbersToCodeBlocks() modifies the DOM.
+   */
+  private buildPositionToBlockMap(): void {
+    this.positionToBlockMap.clear();
+    const document = this.dom.window.document;
+    const codeBlocks = document.querySelectorAll('pre.Agda');
+
+    codeBlocks.forEach((block, blockIndex) => {
+      const blockId = `B${blockIndex + 1}`;
+      // Find all elements with numeric IDs (Agda position references)
+      const elementsWithIds = block.querySelectorAll('[id]');
+      elementsWithIds.forEach((element) => {
+        const id = element.getAttribute('id');
+        // Only map numeric IDs (Agda positions), not our generated IDs
+        if (id && /^\d+$/.test(id)) {
+          this.positionToBlockMap.set(id, blockId);
+        }
+      });
+    });
+  }
+
+  /**
    * Transforms the HTML with custom navigation
    */
   public transform(): string {
@@ -32,6 +56,8 @@ export class AgdaDocsTransformer {
     this.addStyles();
     this.addHeader();
     this.addSidebar();
+    // Build position-to-block mapping BEFORE modifying DOM structure
+    this.buildPositionToBlockMap();
     this.addLineNumbersToCodeBlocks();
     this.addSearchFunctionality();
     this.addTypePreviewContainer();
@@ -163,31 +189,18 @@ export class AgdaDocsTransformer {
    * For literate Agda files where there are multiple code blocks
    */
   private findCodeBlockContainingPosition(document: Document, position: string): Element | null {
-    // Get all code blocks
+    // Use the pre-built mapping (built before DOM modification)
+    const blockId = this.positionToBlockMap.get(position);
+    if (blockId) {
+      const block = document.getElementById(blockId);
+      if (block) {
+        return block;
+      }
+    }
+
+    // Fallback: return first block if position not in map
     const codeBlocks = document.querySelectorAll('pre.Agda');
-    if (codeBlocks.length <= 1) {
-      // If there's only one block, it must be that one
-      return codeBlocks[0] || null;
-    }
-
-    // Try to find the exact position in any code block
-    for (const block of codeBlocks) {
-      const positionElement = block.querySelector(`[id="${position}"]`);
-      if (positionElement) {
-        return block;
-      }
-
-      // Check if any elements inside this block have data-position attribute
-      const elementsWithPosition = block.querySelectorAll(`[data-position="${position}"]`);
-      if (elementsWithPosition.length > 0) {
-        return block;
-      }
-    }
-
-    // If not found by exact position matching, we need to do more heuristics
-    // This is a complex problem that might require analyzing the content
-    // For now, we'll return the first block as a fallback
-    return codeBlocks[0];
+    return codeBlocks[0] || null;
   }
 
   /**
