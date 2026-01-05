@@ -24,42 +24,61 @@ function findConfigFile(): string | null {
   return null;
 }
 
-// Simple direct file processing without workers
+// Default batch size for processing files
+const DEFAULT_BATCH_SIZE = 50;
+
+// Process files in batches to manage memory usage
 async function processFiles(
   inputDir: string,
   outputDir: string,
   files: string[],
   config: AgdaDocsConfig,
-  progressCallback: (current: number, total: number) => void
+  progressCallback: (current: number, total: number) => void,
+  batchSize: number = DEFAULT_BATCH_SIZE
 ): Promise<void> {
-  // Create transformer with config
-  const transformer = new AgdaDocsTransformer(config);
-
   let processedCount = 0;
+  const totalBatches = Math.ceil(files.length / batchSize);
 
-  for (const file of files) {
-    try {
-      const inputPath = path.join(inputDir, file);
-      const outputPath = path.join(outputDir, file);
-      const content = fs.readFileSync(inputPath, 'utf8');
+  for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+    const batchStart = batchIndex * batchSize;
+    const batchEnd = Math.min(batchStart + batchSize, files.length);
+    const batchFiles = files.slice(batchStart, batchEnd);
 
-      // Process the file
-      transformer.setContent(content, file);
-      const processed = transformer.transform();
+    // Create a fresh transformer for each batch to release memory
+    const transformer = new AgdaDocsTransformer(config);
 
-      // Ensure output directory exists
-      const outputDirForFile = path.dirname(outputPath);
-      if (!fs.existsSync(outputDirForFile)) {
-        fs.mkdirSync(outputDirForFile, { recursive: true });
+    for (const file of batchFiles) {
+      try {
+        const inputPath = path.join(inputDir, file);
+        const outputPath = path.join(outputDir, file);
+        const content = fs.readFileSync(inputPath, 'utf8');
+
+        // Process the file
+        transformer.setContent(content, file);
+        const processed = transformer.transform();
+
+        // Ensure output directory exists
+        const outputDirForFile = path.dirname(outputPath);
+        if (!fs.existsSync(outputDirForFile)) {
+          fs.mkdirSync(outputDirForFile, { recursive: true });
+        }
+
+        fs.writeFileSync(outputPath, processed);
+
+        processedCount++;
+        progressCallback(processedCount, files.length);
+      } catch (error) {
+        console.error(`Error processing ${file}:`, error);
+        throw error;
       }
+    }
 
-      fs.writeFileSync(outputPath, processed);
+    // Clean up transformer after each batch
+    transformer.cleanup();
 
-      processedCount++;
-      progressCallback(processedCount, files.length);
-    } catch (error) {
-      console.error(`Error processing ${file}:`, error);
-      throw error;
+    // Hint to garbage collector between batches (non-blocking)
+    if (global.gc) {
+      global.gc();
     }
   }
 }

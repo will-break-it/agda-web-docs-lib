@@ -32,6 +32,17 @@ export class AgdaDocsTransformer {
   }
 
   /**
+   * Explicitly release resources to help garbage collection
+   * Call this when done with the transformer instance
+   */
+  public cleanup(): void {
+    this.positionToBlockMap.clear();
+    if (this.dom && this.dom.window) {
+      this.dom.window.close();
+    }
+  }
+
+  /**
    * Builds a mapping of Agda position IDs to their containing block IDs.
    * Must be called before addLineNumbersToCodeBlocks() modifies the DOM.
    */
