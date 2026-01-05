@@ -19,6 +19,12 @@ export class AgdaDocsTransformer {
    * Sets the HTML content to transform
    */
   public setContent(content: string, filename?: string): void {
+    // Clear previous state to help garbage collection
+    this.positionToBlockMap.clear();
+    if (this.dom && this.dom.window) {
+      this.dom.window.close();
+    }
+
     this.dom = new JSDOM(content);
     if (filename) {
       this.currentFile = filename;
