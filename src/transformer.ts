@@ -119,8 +119,11 @@ export class AgdaDocsTransformer {
         const filePart = hashMatch[1] || '';
         const position = hashMatch[2];
 
-        // If this is a reference to the current file
-        if (!filePart) {
+        // Check if this is a reference to the current file
+        // (either no file part, or file part matches current file)
+        const isSameFile = !filePart || filePart === this.currentFile;
+
+        if (isSameFile) {
           if (currentFileMappings[position]) {
             const lineNumber = currentFileMappings[position];
 
