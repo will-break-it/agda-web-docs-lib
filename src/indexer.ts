@@ -8,10 +8,10 @@ export class AgdaDocsIndexer {
 
   /**
    * Gets the global position-to-line mappings for all files
-   * Used for passing mappings to worker threads
+   * Returns direct reference (read-only) to avoid memory copying
    */
   public static getGlobalMappings(): PositionMappings {
-    return { ...AgdaDocsIndexer.globalPositionMappings };
+    return AgdaDocsIndexer.globalPositionMappings;
   }
 
   /**

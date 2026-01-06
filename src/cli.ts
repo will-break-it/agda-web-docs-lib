@@ -25,7 +25,7 @@ function findConfigFile(): string | null {
 }
 
 // Default batch size for processing files (smaller = less memory, slower)
-const DEFAULT_BATCH_SIZE = 25;
+const DEFAULT_BATCH_SIZE = 10;
 
 // Process files in batches to manage memory usage
 async function processFiles(
@@ -76,10 +76,13 @@ async function processFiles(
     // Clean up transformer after each batch
     transformer.cleanup();
 
-    // Hint to garbage collector between batches (non-blocking)
+    // Force garbage collection between batches
     if (global.gc) {
       global.gc();
     }
+
+    // Small delay to allow GC to complete
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
 }
 
