@@ -24,8 +24,8 @@ function findConfigFile(): string | null {
   return null;
 }
 
-// Default batch size for processing files
-const DEFAULT_BATCH_SIZE = 50;
+// Default batch size for processing files (smaller = less memory, slower)
+const DEFAULT_BATCH_SIZE = 25;
 
 // Process files in batches to manage memory usage
 async function processFiles(

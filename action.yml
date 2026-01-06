@@ -33,7 +33,7 @@ inputs:
   node-options:
     description: "Node.js options (e.g., --max-old-space-size=4096 for large documentation sets)"
     required: false
-    default: "--max-old-space-size=2048"
+    default: "--max-old-space-size=2048 --expose-gc"
   cache-dependency-path:
     description: "Path to package-lock.json for npm caching (if not provided, caching will be disabled)"
     required: false
