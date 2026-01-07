@@ -4,24 +4,24 @@
 [![npm version](https://badge.fury.io/js/agda-web-docs-lib.svg)](https://badge.fury.io/js/agda-web-docs-lib)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-Transform your Agda HTML documentation with modern web features, responsive design, and powerful search capabilities.
+A GitHub Action and npm library that transforms Agda HTML documentation with modern web features, responsive design, and search capabilities.
 
-## ✨ Features
+## Features
 
-- 🎨 **Clean, responsive design** with sidebar navigation
-- 🌓 **Dark/light theme** with system preference detection  
-- 🔍 **Full-text search** with `Ctrl+K` / `Cmd+K` shortcut
-- 🖱️ **Line highlighting** with shareable URLs (`#L42`, `#L42-L48`)
-- 💡 **Type previews** on hover with cross-file resolution
-- 🔗 **GitHub integration** for source file links
-- 📱 **Mobile-friendly** responsive layout
+- Clean, responsive design with sidebar navigation
+- Dark/light theme with system preference detection
+- Full-text search with `Ctrl+K` / `Cmd+K` shortcut
+- Line highlighting with shareable URLs (`#L42`, `#L42-L48`)
+- Type previews on hover with cross-file resolution
+- GitHub integration for source file links
+- Mobile-friendly responsive layout
 
-## 🎯 Quick Start
+## Quick Start
 
 ### GitHub Actions (Recommended)
 
 ```yaml
-- name: 🔄 Transform Agda documentation  
+- name: Transform Agda documentation
   uses: will-break-it/agda-web-docs-lib@v1
   with:
     input-dir: 'html/'
@@ -30,16 +30,16 @@ Transform your Agda HTML documentation with modern web features, responsive desi
     cache-dependency-path: 'package-lock.json'  # Optional: enable npm caching
 ```
 
-**Performance Tip:** Include `cache-dependency-path` to enable npm caching and speed up your workflows.
+Include `cache-dependency-path` to enable npm caching and speed up your workflows.
 
-## 🖼️ Visual Examples
+## Visual Examples
 
-### Modern Layout & Navigation
+### Modern Layout and Navigation
 ![Modern Layout](static/layout.png)
 
 Clean, responsive design with intelligent sidebar navigation, theme switching, and GitHub integration.
 
-### Powerful Search
+### Search
 ![Search Interface](static/search.png)
 
 Instant search across modules, functions, and code blocks with fuzzy matching and keyboard navigation.
@@ -47,14 +47,14 @@ Instant search across modules, functions, and code blocks with fuzzy matching an
 ### Line Highlighting
 ![Line Highlighting](static/line-highlighting.png)
 
-GitHub-like line selection with shareable URLs. Click line numbers or select ranges with Shift+click.
+GitHub-style line selection with shareable URLs. Click line numbers or select ranges with Shift+click.
 
 ### Type Previews
 ![Type Preview with Parameters](static/type-preview-with-params.png)
 
 Rich type definition previews with documentation, parameter tables, and cross-file resolution.
 
-## ⚙️ Configuration
+## Configuration
 
 Create `agda-docs.config.json`:
 
@@ -66,9 +66,7 @@ Create `agda-docs.config.json`:
 }
 ```
 
-## 🛠️ Advanced Usage
-
-### Complete GitHub Workflow
+## Complete Workflow Example
 
 ```yaml
 name: Deploy Agda Documentation
@@ -82,23 +80,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Agda
         uses: wenkokke/setup-agda@v2
         with:
           agda-version: '2.6.4'
-          
+
       - name: Generate HTML
         run: agda --html --html-dir=html/ src/Main.agda
-        
+
       - name: Transform documentation
         uses: will-break-it/agda-web-docs-lib@v1
         with:
           input-dir: 'html/'
           github-url: ${{ github.server_url }}/${{ github.repository }}
           modules: 'Your.Module.Prefix'
-    cache-dependency-path: 'package-lock.json'  # Optional: enable npm caching
-          
+          cache-dependency-path: 'package-lock.json'
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
@@ -106,14 +104,14 @@ jobs:
           publish_dir: html/
 ```
 
-## 📚 Examples
+## Examples
 
 - [Leios Formal Specification](https://leios.cardano-scaling.org/formal-spec/Leios.Base.html)
 
-## 🤝 Contributing
+## Contributing
 
-Contributions are welcome! Please feel free to submit issues and pull requests.
+Contributions are welcome. Please feel free to submit issues and pull requests.
 
-## 📄 License
+## License
 
 MIT
